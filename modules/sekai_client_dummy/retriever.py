@@ -35,7 +35,7 @@ class ProjectSekaiDataRetriever:
         )
         self.policy = policy
         self.upload_type = upload_type
-        self.logger = AsyncLogger(__name__, level="DEBUG")
+        self.logger = AsyncLogger("SekaiDataRetriever", level="DEBUG")
         self.is_error_exist = False
         self.error_message = None
 
@@ -96,6 +96,8 @@ class ProjectSekaiDataRetriever:
         if self.is_error_exist:
             return None
         response, status = await self.client.call_api(path="/module-maintenance/MYSEKAI")
+        if status != 200:
+            return None
         response = await self.client.unpack_data(response)
         if response["isOngoing"] is True:
             return None

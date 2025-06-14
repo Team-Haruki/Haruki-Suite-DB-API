@@ -57,7 +57,7 @@ async def handle_and_update_data(
 
 
 async def callback_webhook_api(url: str, bearer: str = None) -> None:
-    logger = AsyncLogger("WebHook Callback Client", level="DEBUG")
+    logger = AsyncLogger("WebHookCallbackClient", level="DEBUG")
     await logger.start()
     await logger.info(f"Calling back WebHook API: {url}")
     headers = {"User-Agent": "Haruki-Suite-DB/v2.2.0"}

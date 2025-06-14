@@ -39,7 +39,7 @@ class ProjectSekaiClient(object):
         self.pack = pack_func
         self.unpack = unpack_func
         self.proxy = proxy
-        self.logger = AsyncLogger(__name__, level="DEBUG")
+        self.logger = AsyncLogger("SekaiClient", level="DEBUG")
 
     async def pack_data(self, content: Union[Dict[str, Any], List[Any]]) -> bytes:
         return await asyncio.to_thread(self.pack, content, SupportedSuiteUploadServer(str(self.server)))
