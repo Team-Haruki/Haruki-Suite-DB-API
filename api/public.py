@@ -62,13 +62,13 @@ async def get_user(
             request_keys = request_key.split(",")
             if len(request_keys) == 1:
                 if request_keys[0] in allowed_keys:
-                    return result.get(request_keys[0], {})
+                    return result.get(request_keys[0], [])
                 else:
                     raise APIException(status=403, message="Invalid request key")
             else:
                 for key in request_keys:
                     if key in allowed_keys:
-                        suite[key] = result.get(key)
+                        suite[key] = result.get(key, [])
                 return suite
         elif request_key and request_key not in allowed_keys:
             raise APIException(status=403, message="Invalid request key")

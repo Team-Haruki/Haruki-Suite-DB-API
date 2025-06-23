@@ -56,7 +56,7 @@ async def script_upload_data(request: Request) -> APIResponse:
     upload_type, user_id = extracted
 
     server = None
-    for server, _tuple in api_endpoint:
+    for server, _tuple in api_endpoint.items():
         if _tuple[1] in original_url:
             server = server
             break
@@ -101,7 +101,7 @@ async def script_upload_data(request: Request) -> APIResponse:
             raise APIException(result.status, result.error_message or "Unknown Error")
         data_chunks.pop(upload_id)
         await logger.info(
-            f"Received chunked data upload for {server} server {upload_type} request from user {user_id} (upload ID: {upload_id}, script version: {script_version}))"
+            f"Received chunked data upload for {server} server {upload_type} request from user {user_id} (upload ID: {upload_id}, script version: {script_version})"
         )
         for path in get_clear_cache_paths(server, upload_type, user_id):
             await clear_cache_by_path(**path)
