@@ -32,4 +32,4 @@
 
 | 文档 | 状态 |
 | --- | --- |
-| [数据库合并计划](database-consolidation-plan.zh-CN.md) | 2026-09-05 已满足 7 天观察期；U11 收尾改为 PostgreSQL 唯一读写源，部署与 Mongo 下线结果见验收记录 |
+| [数据库合并计划](database-consolidation-plan.zh-CN.md) | 2026-09-05 已完成 U11：PostgreSQL 唯一读写源，Mongo / canary 已下线；备份与验收结果见 §0 |

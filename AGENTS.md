@@ -6,7 +6,7 @@ Haruki Toolbox Backend 是一个基于 Go 1.26 的后端项目，核心技术栈
 
 - Fiber：HTTP 路由与中间件
 - Ent：PostgreSQL schema 与 ORM
-- MongoDB：游戏数据、Webhook 等文档型数据存储
+- 游戏数据：独立 PostgreSQL pool 存储 suite / mysekai；MongoDB 已退役，仅保留 BSON 兼容工具
 - Redis：缓存、验证码状态、限流状态、会话辅助状态
 - Ory Kratos：浏览器身份体系与自助认证流程
 - Ory Hydra：OAuth2 / OIDC

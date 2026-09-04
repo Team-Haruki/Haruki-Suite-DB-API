@@ -2,7 +2,7 @@
 
 本文记录把 suite / mysekai 游戏数据从 MongoDB 整合进 PostgreSQL 的动机、实测依据、目标结构、迁移 CLI 与灰度步骤。
 
-> 状态：**2026-09-05 已满足 7 天观察期，正在执行 U11 收尾**。生产自 2026-08-29 01:29 起读 PostgreSQL；当前执行记录与验收证据见 §0。维护者已决定不需要对外公告。后续各章保留迁移设计与历史实测，历史阶段状态以 §0 为准。
+> 状态：**2026-09-05 已完成 U11 生产切换与 MongoDB 下线**。生产自 2026-08-29 01:29 起读 PostgreSQL；当前执行记录与验收证据见 §0。维护者已决定不需要对外公告。后续各章保留迁移设计与历史实测，历史阶段状态以 §0 为准。
 
 ## 0. 2026-09-05 验收与 U11 收尾记录
 
@@ -28,7 +28,15 @@ PostgreSQL 成为唯一读写源，上传在持久化失败时返回错误，且
 
 ### 部署与旧数据
 
-执行中：完成全量检查后部署；下线前保留最终备份，再停止 canary 与旧 Mongo 服务。实际镜像、备份路径和验证结果在执行完成后补记。
+- 2026-09-05 07:11:22（北京时间）生产后端启动新版本：`haruki-toolbox-backend:u11-95d2a22`，源码提交 `95d2a22`，分支 `codex/retire-toolbox-mongo`。
+- 镜像在生产本机构建：沿用旧镜像 `sha-0e26a8e` 的运行时，仅替换经过验证的 Linux amd64 二进制；未发布到 GHCR。二进制 SHA-256：`652ec9cbb98def67cd048170a0cb301e8873d832c5e0204e911d52d11ce99244`。对应源码归档与二进制一同保存在备份目录。
+- 部署前后 52 组有效 HTTP 200 响应摘要全部一致（公开 34、私有 18）；133 组双方 404 单独统计。Mongo 停止后再次对照仍一致。已观察到部署后的真实 suite 上传持续写入 PG；没有 game-data write failed、panic 或重启。
+- `/api/health` 为 200，依赖项为 `postgresql` / `redis` / `game_data`，均为 up；后端端口仍只绑定 `100.80.207.86:16666`。PG 备库 `toolbox_cn07_backup` 持续 streaming，最后检查 WAL 差 1,880 字节。
+- canary 后端及其 Redis 容器已删除，生产 Mongo 容器已停止并删除。活动 Compose 中移除了 Mongo 服务、依赖与连接环境变量；canary 启动文件及专用环境文件已归档。CN07 本次确认无 Mongo 副本容器或活动数据目录，仅留有标注 `pre-mongo-removal-20260826` 的历史 Compose 备份。
+- Mongo 停止后生成最终冷备份 `mongo-final.tar`（约 4.5 GB），包含整个 `mongo-data` 和 `mongo-keyfile`，覆盖 suite / mysekai 以及历史 storage / webhook / webhook_user 集合。`tar -d` 逐文件比对成功，SHA-256 复核成功，随后删除旧活动数据目录。根盘使用率 73% → 63%。
+- 备份目录：CN02 `/data2/backups/toolbox-u11-20260905/`，仅 root 可访问，保留部署前 Compose / 环境文件、冷备份、源码和二进制。PG 切换前逻辑归档 `haruki_gamedata-before.dump` 约 2.8 GB，07:19 完成 `pg_restore --file=/dev/null` 全量解码验证及 SHA-256 校验和记录，`pg-backup.verified` 已生成。
+
+**恢复边界**：Mongo 冷备份冻结于停写时刻，不含后续 PG 上传；不得直接恢复旧 Mongo 读源作为无损回滚。恢复部署必须继续以 PG 为数据权威；旧配置只作为操作记录保留。
 
 ## 1. 为什么要做
 
