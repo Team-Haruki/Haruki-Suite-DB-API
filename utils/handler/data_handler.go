@@ -64,25 +64,10 @@ func (h *DataHandler) ExtractGameUserIDForExpected(data map[string]any, expected
 }
 
 func (h *DataHandler) PersistUploadData(ctx context.Context, data map[string]any, server utils.SupportedDataUploadServer, dataType utils.UploadDataType, expectedUserID *int64) error {
-	// MongoDB gets the stripped copy, the game-data store gets the upload as it
-	// arrived. The 16 MB document limit is MongoDB's alone: a real heavy jp
-	// account is 16.16 MB of BSON unstripped — it simply cannot be written —
-	// while the same upload is 1.36 MB in PostgreSQL. Stripping for one store
-	// and not the other is what lets the game-data store start keeping the full
-	// document today instead of after MongoDB is decommissioned.
-	mongoData := data
-	if dataType == utils.UploadDataTypeSuite {
-		mongoData = h.SuiteRestoreService.StripForMongoStore(data)
+	if expectedUserID == nil {
+		return fmt.Errorf("game user ID is required")
 	}
-	if _, err := h.DBManager.Mongo.UpdateData(ctx, string(server), *expectedUserID, mongoData, dataType); err != nil {
-		h.Logger.Errorf("Failed to update mongo data: %v", err)
-		return err
-	}
-	// Mirror into the PostgreSQL game-data store. MongoDB is authoritative until
-	// game_data.read_source flips; after it flips this write is what makes an
-	// upload readable. It never fails the upload — see shadowWriteGameData.
-	h.shadowWriteGameData(ctx, data, server, dataType, *expectedUserID)
-	return nil
+	return h.writeGameData(ctx, data, server, dataType, *expectedUserID)
 }
 
 func (h *DataHandler) RunUploadFanout(raw []byte, data map[string]any, server utils.SupportedDataUploadServer, dataType utils.UploadDataType, expectedUserID *int64, settings apiHelper.HarukiToolboxGameAccountPrivacySettings, isPublicAPI bool) {

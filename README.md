@@ -5,7 +5,7 @@ It also utilizes Redis for efficient caching to speed up API responses.
 
 ## Requirements
 + `PostgreSQL`
-+ `MongoDB`
++ `PostgreSQL` 游戏数据存储
 + `Redis`
 + `Go 1.26.0` (for local development)
 

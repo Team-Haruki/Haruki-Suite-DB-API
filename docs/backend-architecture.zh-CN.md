@@ -48,12 +48,12 @@ main -> bootstrap -> api -> modules -> platform
 `internal/bootstrap.Build` 是唯一的进程级装配入口：
 
 1. 校验不可变启动配置。
-2. 获取数据库、Redis、MongoDB、日志、HTTP 与第三方客户端。
+2. 获取PostgreSQL（业务库与游戏数据库）、Redis、日志、HTTP 与第三方客户端。
 3. 构造业务服务并显式注入模块。
 4. 注册路由和后台任务。
 5. 返回拥有全部资源的 `Application`。
 
-`Application.Serve` 只负责运行并响应取消；`Application.Close` 幂等完成关闭。生命周期区分两类后台工作：爱发电同步与性能采样属于长期 scheduler，收到关闭信号后先取消并等待；upload audit、上传 fanout、birthday/webhook 通知及 iOS 异步组包属于请求派生的有限任务，必须先让 Fiber 停止接收请求并完成 handler drain，再封口任务组并有界等待。只有 HTTP shutdown 与 upload task drain 都成功后，才按资源获取的逆序释放连接；任一阶段超时都保留 PostgreSQL、Redis、MongoDB 等仍可能被使用的资源。`internal/platform/mailnotify` 当前仍使用自身的有界派发器，不属于本轮 upload task group，后续应单独迁移。不要在业务模块中自行管理进程信号或长期资源的关闭顺序。
+`Application.Serve` 只负责运行并响应取消；`Application.Close` 幂等完成关闭。生命周期区分两类后台工作：爱发电同步与性能采样属于长期 scheduler，收到关闭信号后先取消并等待；upload audit、上传 fanout、birthday/webhook 通知及 iOS 异步组包属于请求派生的有限任务，必须先让 Fiber 停止接收请求并完成 handler drain，再封口任务组并有界等待。只有 HTTP shutdown 与 upload task drain 都成功后，才按资源获取的逆序释放连接；任一阶段超时都保留 PostgreSQL、Redis 等仍可能被使用的资源。`internal/platform/mailnotify` 当前仍使用自身的有界派发器，不属于本轮 upload task group，后续应单独迁移。不要在业务模块中自行管理进程信号或长期资源的关闭顺序。
 
 ## 4. 配置所有权
 
@@ -71,7 +71,7 @@ main -> bootstrap -> api -> modules -> platform
 - **transport**：解析 Fiber 请求、鉴权结果和分页参数，映射既有状态码与 JSON。
 - **service/use case**：事务、状态转移和跨实体规则；不依赖 Fiber。
 - **ports**：该用例实际需要的存储、通知或外部服务窄接口，定义在消费方。
-- **adapters/store**：将 Ent、MongoDB、Redis 或第三方客户端适配到 ports。
+- **adapters/store**：将 Ent、PostgreSQL 游戏数据存储、Redis 或第三方客户端适配到 ports。
 
 用户端和管理员端可以保留不同 transport，但共同的状态机、校验、事务与通知规则应进入同一个领域服务。鉴权与审计仍由各自 transport 负责。
 
@@ -90,7 +90,7 @@ main -> bootstrap -> api -> modules -> platform
 - HTTP 方法、路径、鉴权类型、状态码与 JSON 结构；
 - Oathkeeper、Kratos 与 Hydra 的 header、subject 和会话语义；
 - Redis key、TTL 与原子计数语义；
-- MongoDB collection、文档字段和 int64 精度；
+- PostgreSQL 游戏数据列、响应字段和 int64 精度；
 - Webhook 的 dial-time DNS 校验、IP pin、重定向与 proxy 限制；
 - 上传深度、字段名、剩余长度等不可信输入限制；
 - 管理员角色层级、对象级 scope 和公开接口的防枚举行为。

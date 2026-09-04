@@ -52,7 +52,7 @@ func buildDependencyHealth(parent context.Context, apiHelper *harukiAPIHelper.Ha
 	return fiber.Map{
 		"postgresql": dependencyHealthEntry(pingPostgreSQL(parent, apiHelper)),
 		"redis":      dependencyHealthEntry(pingRedis(parent, apiHelper)),
-		"mongo":      dependencyHealthEntry(pingMongo(parent, apiHelper)),
+		"game_data":  dependencyHealthEntry(pingGameData(parent, apiHelper)),
 	}
 }
 
@@ -98,11 +98,11 @@ func pingRedis(parent context.Context, apiHelper *harukiAPIHelper.HarukiToolboxR
 	return apiHelper.DBManager.Redis.Redis.Ping(ctx).Err()
 }
 
-func pingMongo(parent context.Context, apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) error {
-	if apiHelper == nil || apiHelper.DBManager == nil || apiHelper.DBManager.Mongo == nil {
-		return fmt.Errorf("mongo client is not initialized")
+func pingGameData(parent context.Context, apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) error {
+	if apiHelper == nil || apiHelper.DBManager == nil || apiHelper.DBManager.GameData == nil {
+		return fmt.Errorf("game data client is not initialized")
 	}
 	ctx, cancel := context.WithTimeout(parent, dependencyHealthTimeout)
 	defer cancel()
-	return apiHelper.DBManager.Mongo.Ping(ctx)
+	return apiHelper.DBManager.GameData.Ping(ctx)
 }

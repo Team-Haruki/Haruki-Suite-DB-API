@@ -379,7 +379,7 @@ func (a *Application) Close() error {
 		}
 	}
 	if err := a.drainBackgroundTasks(); err != nil {
-		// A timed-out task may still be using PostgreSQL, Redis, or MongoDB. Keep
+		// A timed-out task may still be using PostgreSQL or Redis. Keep
 		// every resource alive instead of closing dependencies underneath it.
 		return err
 	}

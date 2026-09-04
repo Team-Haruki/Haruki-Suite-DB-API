@@ -76,28 +76,6 @@ services:
       timeout: 5s
       retries: 10
 
-  mongo:
-    image: mongo:7
-    restart: unless-stopped
-    depends_on:
-      mihomo:
-        condition: service_healthy
-    networks:
-      - haruki-net
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-    volumes:
-      - ${MONGO_DATA_PATH}:/data/db
-    ports:
-      - "127.0.0.1:27017:27017"
-      - "${TAILSCALE_IP}:27017:27017"
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--username", "${MONGO_ROOT_USERNAME}", "--password", "${MONGO_ROOT_PASSWORD}", "--authenticationDatabase", "admin", "--eval", "db.runCommand({ ping: 1 }).ok"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   kratos-migrate:
     image: oryd/kratos:${ORY_VERSION}
     networks:
@@ -250,8 +228,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      mongo:
-        condition: service_healthy
       kratos:
         condition: service_started
       hydra:
@@ -266,10 +242,6 @@ services:
       AUTH_PROXY_SESSION_HEADER: X-Auth-Proxy-Session-Id
       HARUKI_DB_TYPE: postgres
       HARUKI_DB_URL: postgresql://${HARUKI_DB_USER}:${HARUKI_DB_PASSWORD}@postgres:5432/toolbox?sslmode=disable
-      MONGODB_URL: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongo:27017/?authSource=admin
-      MONGODB_DB: ${MONGODB_DB}
-      MONGODB_SUITE_COLLECTION: ${MONGODB_SUITE_COLLECTION}
-      MONGODB_MYSEKAI_COLLECTION: ${MONGODB_MYSEKAI_COLLECTION}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD}
@@ -296,6 +268,8 @@ services:
       SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-no-reply@example.com}
       SMTP_FROM_NAME: "${SMTP_FROM_NAME:-Haruki Toolbox}"
       SOCIAL_PLATFORM_VERIFY_TOKEN: ${SOCIAL_PLATFORM_VERIFY_TOKEN}
+      GAME_DATA_URL: ${GAME_DATA_URL}
+      GAME_DATA_READ_SOURCE: postgres
       PRIVATE_API_SECRET: ${PRIVATE_API_SECRET}
       PRIVATE_API_USER_AGENT: ${PRIVATE_API_USER_AGENT}
       WEBHOOK_JWT_SECRET: ${WEBHOOK_JWT_SECRET}

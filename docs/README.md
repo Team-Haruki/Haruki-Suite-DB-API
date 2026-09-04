@@ -32,4 +32,4 @@
 
 | 文档 | 状态 |
 | --- | --- |
-| [数据库合并计划](database-consolidation-plan.zh-CN.md) | 已切换：2026-08-29 起从 PostgreSQL 读取，18 个曾被丢弃的键已对外开放（待公告）。观察期后删除旧数据、下线 MongoDB |
+| [数据库合并计划](database-consolidation-plan.zh-CN.md) | 2026-09-05 已满足 7 天观察期；U11 收尾改为 PostgreSQL 唯一读写源，部署与 Mongo 下线结果见验收记录 |

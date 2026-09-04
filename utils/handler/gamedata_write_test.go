@@ -55,23 +55,10 @@ func TestGameDataWriteModeNeverSelectsMigrate(t *testing.T) {
 	}
 }
 
-// The mirror must be inert wherever the game-data store is not configured —
-// that is the state every deployment is in before the cutover, and a panic here
-// would take down uploads on a build that never touches PostgreSQL.
-func TestShadowWriteGameDataIsInertWithoutStore(t *testing.T) {
-	var nilHandler *DataHandler
-	nilHandler.shadowWriteGameData(context.Background(), map[string]any{},
-		utils.SupportedDataUploadServerJP, utils.UploadDataTypeSuite, 1)
-
-	noManager := &DataHandler{}
-	noManager.shadowWriteGameData(context.Background(), map[string]any{},
-		utils.SupportedDataUploadServerJP, utils.UploadDataTypeSuite, 1)
-}
-
-func TestShadowWriteGameDataIgnoresUnknownDataType(t *testing.T) {
-	h := &DataHandler{}
-	// An unmapped type must return before touching the manager rather than
-	// guessing a collection.
-	h.shadowWriteGameData(context.Background(), map[string]any{},
-		utils.SupportedDataUploadServerJP, utils.UploadDataType("profile"), 1)
+func TestWriteGameDataFailsWithoutStore(t *testing.T) {
+	for _, h := range []*DataHandler{nil, {}} {
+		if err := h.writeGameData(context.Background(), map[string]any{}, utils.SupportedDataUploadServerJP, utils.UploadDataTypeSuite, 1); err == nil {
+			t.Fatal("upload succeeded without a durable store")
+		}
+	}
 }

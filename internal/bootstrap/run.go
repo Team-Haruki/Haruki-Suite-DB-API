@@ -43,6 +43,10 @@ func Build(cfg harukiConfig.Config) (*Application, error) {
 		return nil, err
 	}
 
+	if strings.TrimSpace(cfg.GameData.URL) == "" {
+		return nil, fmt.Errorf("game_data.url is required")
+	}
+
 	application := &Application{
 		shutdownTimeout: time.Duration(cfg.Backend.ShutdownTimeout) * time.Second,
 	}
@@ -114,10 +118,9 @@ func Build(cfg harukiConfig.Config) (*Application, error) {
 		Timeout: 5 * time.Second,
 	})
 	suiteRestoreService := harukiHandler.NewSuiteRestoreService(harukiHandler.SuiteRestoreServiceOptions{
-		StructuresFile:      cfg.RestoreSuite.StructuresFile,
-		EnableRegions:       cfg.RestoreSuite.EnableRegions,
-		SuiteRemoveKeys:     cfg.SekaiClient.SuiteRemoveKeys,
-		MongoOnlyRemoveKeys: cfg.SekaiClient.SuiteMongoOnlyRemoveKeys,
+		StructuresFile:  cfg.RestoreSuite.StructuresFile,
+		EnableRegions:   cfg.RestoreSuite.EnableRegions,
+		SuiteRemoveKeys: cfg.SekaiClient.SuiteRemoveKeys,
 	})
 	application.backgroundTasks = harukiBackground.NewTaskGroup(func(name string, recovered any) {
 		resources.logger.Errorf("Background task %q panicked: %v", name, recovered)
@@ -192,7 +195,7 @@ func Build(cfg harukiConfig.Config) (*Application, error) {
 			sqlPools = append(sqlPools, sqlPoolSource{name: "bot", db: resources.botSQLDB})
 		}
 		samplerInterval := time.Duration(cfg.Backend.ProfilingIntervalSeconds) * time.Second
-		waitStatsSampler = startStatsSampler(schedulerCtx, samplerInterval, resources.mongoPoolStats, sqlPools, resources.logger)
+		waitStatsSampler = startStatsSampler(schedulerCtx, samplerInterval, sqlPools, resources.logger)
 	}
 	// Workers are owned by Application so Serve/Close always cancel and drain them
 	// before any database resource is released.

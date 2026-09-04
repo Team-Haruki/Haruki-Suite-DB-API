@@ -12,7 +12,7 @@ func defaultConfig() Config {
 			ShutdownTimeout: 10,
 		},
 		GameData: GameDataConfig{
-			ReadSource: GameDataReadMongo,
+			ReadSource: GameDataReadPostgres,
 			// MaxConns 0 keeps pgx's own default; MinConns 0 is resolved to
 			// MaxConns by the pool so it always starts warm.
 			MaxConns: 0,
@@ -66,16 +66,12 @@ func normalizeConfigDefaults(cfg *Config) error {
 	cfg.Others.DeprecatedPublicAPIAllowedKeys = nil
 
 	if cfg.GameData.ReadSource == "" {
-		cfg.GameData.ReadSource = GameDataReadMongo
+		cfg.GameData.ReadSource = GameDataReadPostgres
 	}
 	switch cfg.GameData.ReadSource {
-	case GameDataReadMongo, GameDataReadPostgres:
+	case GameDataReadPostgres:
 	default:
-		return fmt.Errorf("game_data.read_source must be %q or %q, got %q",
-			GameDataReadMongo, GameDataReadPostgres, cfg.GameData.ReadSource)
-	}
-	if cfg.GameData.ReadSource == GameDataReadPostgres && cfg.GameData.URL == "" {
-		return fmt.Errorf("game_data.read_source=%q requires game_data.url", GameDataReadPostgres)
+		return fmt.Errorf("game_data.read_source must be %q, got %q", GameDataReadPostgres, cfg.GameData.ReadSource)
 	}
 
 	if cfg.Backend.ShutdownTimeout <= 0 {

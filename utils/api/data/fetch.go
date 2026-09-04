@@ -5,7 +5,6 @@ import (
 	"fmt"
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
-	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
@@ -43,23 +42,6 @@ func buildMysekaiProjection(keys []string) bson.M {
 		proj[key] = 1
 	}
 	return proj
-}
-
-func buildSuiteResponse(result bson.D, keys []string) bson.D {
-	resp := make(bson.D, 0, len(keys))
-	for _, key := range keys {
-		if key == "userGamedata" {
-			for _, elem := range result {
-				if elem.Key == "userGamedata" {
-					resp = append(resp, bson.E{Key: "userGamedata", Value: elem.Value})
-					break
-				}
-			}
-		} else {
-			resp = append(resp, bson.E{Key: key, Value: GetValueFromResult(result, key)})
-		}
-	}
-	return resp
 }
 
 // InvalidSuiteRequestKey returns the first requested suite key the allowlist
@@ -109,36 +91,8 @@ func HandleSuiteRequest(ctx context.Context, apiHelper *harukiAPIHelper.HarukiTo
 		keys = strings.Split(requestKey, ",")
 	}
 
-	// Cutover switch. Returns a rendered BODY, which the caller serves as-is.
-	if gd := apiHelper.DBManager.GameData; gd.ReadsFromPostgres() {
-		return suiteBodyFromPostgres(ctx, gd.Suite(), userID, server, keys,
-			requestKey != "" && len(keys) == 1)
-	}
-
-	projection := buildSuiteProjection(keys)
-	result, err := apiHelper.DBManager.Mongo.GetDataWithProjection(ctx, userID, string(server), harukiUtils.UploadDataTypeSuite, projection)
-	if err != nil {
-		harukiLogger.Errorf("Failed to fetch mongo data: %v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get user data")
-	}
-	if len(result) == 0 {
-		return nil, fiber.NewError(fiber.StatusNotFound, "Player data not found.")
-	}
-
-	if requestKey != "" && len(keys) == 1 {
-		key := keys[0]
-		if key == "userGamedata" {
-			for _, elem := range result {
-				if elem.Key == "userGamedata" {
-					return NormalizeProviderResponse(elem.Value), nil
-				}
-			}
-			return NormalizeProviderResponse(bson.D{}), nil
-		}
-		return NormalizeProviderResponse(GetValueFromResult(result, key)), nil
-	}
-
-	return NormalizeProviderResponse(buildSuiteResponse(result, keys)), nil
+	return suiteBodyFromPostgres(ctx, apiHelper.DBManager.GameData.Suite(), userID, server, keys,
+		requestKey != "" && len(keys) == 1)
 }
 
 // HandleMysekaiRequest takes an explicit ctx for the same reason as
@@ -152,19 +106,5 @@ func HandleMysekaiRequest(ctx context.Context, apiHelper *harukiAPIHelper.Haruki
 		keys = strings.Split(requestKey, ",")
 	}
 
-	if gd := apiHelper.DBManager.GameData; gd.ReadsFromPostgres() {
-		return mysekaiBodyFromPostgres(ctx, gd.Mysekai(), userID, server, keys)
-	}
-
-	projection := buildMysekaiProjection(keys)
-	result, err := apiHelper.DBManager.Mongo.GetDataWithProjection(ctx, userID, string(server), harukiUtils.UploadDataTypeMysekai, projection)
-	if err != nil {
-		harukiLogger.Errorf("Failed to fetch mongo data: %v", err)
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to get user data")
-	}
-	if len(result) == 0 {
-		return nil, fiber.NewError(fiber.StatusNotFound, "Player data not found.")
-	}
-
-	return NormalizeProviderResponse(result), nil
+	return mysekaiBodyFromPostgres(ctx, apiHelper.DBManager.GameData.Mysekai(), userID, server, keys)
 }

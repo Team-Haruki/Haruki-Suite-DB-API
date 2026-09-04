@@ -5,11 +5,9 @@ type RestoreSuiteConfig struct {
 	StructuresFile map[string]string `yaml:"structures_file"`
 }
 
+// MongoDBConfig retains the legacy YAML namespace for private API credentials only.
+// It no longer configures a database connection.
 type MongoDBConfig struct {
-	URL                 string `yaml:"url"`
-	DB                  string `yaml:"db"`
-	Suite               string `yaml:"suite"`
-	Mysekai             string `yaml:"mysekai"`
 	PrivateApiSecret    string `yaml:"private_api_secret"`
 	PrivateApiUserAgent string `yaml:"private_api_user_agent"`
 }
@@ -22,23 +20,13 @@ type MongoDBConfig struct {
 type GameDataReadSource string
 
 const (
-	// GameDataReadMongo is the pre-cutover source.
-	GameDataReadMongo GameDataReadSource = "mongo"
 	// GameDataReadPostgres is the post-cutover source.
 	GameDataReadPostgres GameDataReadSource = "postgres"
 )
 
 type GameDataConfig struct {
 	URL string `yaml:"url"`
-	// ReadSource is flipped inside the read-only maintenance window, after the
-	// backfill has been verified. It defaults to "mongo" so deploying the new
-	// code changes nothing until the flip is made deliberately, and so the flip
-	// is reversible by the same one-line change.
-	//
-	// Flipping it REQUIRES wiping the game-data Redis namespace in the same
-	// step: no cache key records which datastore produced a body, so a stamp
-	// minted against one store would otherwise answer 304 for a body built by
-	// the other.
+	// ReadSource accepts only postgres; retained to reject stale Mongo deployments.
 	ReadSource GameDataReadSource `yaml:"read_source"`
 	// MaxConns is the pool ceiling. 0 leaves pgx's default (max(4, NumCPU)).
 	MaxConns int `yaml:"max_conns"`
@@ -146,7 +134,7 @@ type BackendConfig struct {
 	BackendURL       string   `yaml:"backend_url"`
 	BackendCDNURL    string   `yaml:"backend_cdn_url"`
 	// ProfilingEnabled turns on opt-in performance instrumentation: a periodic
-	// Mongo/PG pool + Go GC stats sampler and slow-request autopsies. Off by default;
+	// PG pool + Go GC stats sampler and slow-request autopsies. Off by default;
 	// safe to flip on during an incident to diagnose resource saturation.
 	ProfilingEnabled bool `yaml:"profiling_enabled"`
 	// ProfilingIntervalSeconds is how often the stats sampler logs (default 15s).
@@ -201,24 +189,9 @@ type SekaiClientConfig struct {
 	ENServerAppVersionUrl        string            `yaml:"en_server_app_version_url"`
 	JPServerInheritClientHeaders map[string]string `yaml:"jp_server_inherit_client_headers"`
 	ENServerInheritClientHeaders map[string]string `yaml:"en_server_inherit_client_headers"`
-	// SuiteRemoveKeys are blanked in EVERY store. A key stays here only while
-	// exposing it would change an API response — the game-data store keeps no
-	// copy either, so this is the list that cannot be undone by a read cutover.
+	// SuiteRemoveKeys optionally discard fields before PostgreSQL persistence.
+	// Keep empty to retain full uploads; API projections control public access.
 	SuiteRemoveKeys []string `yaml:"suite_remove_keys"`
-	// SuiteMongoOnlyRemoveKeys are blanked in the MongoDB write ONLY; the
-	// PostgreSQL game-data store receives them in full.
-	//
-	// This is the 16 MB protection, not a data policy: measured on a real heavy
-	// jp account, the unstripped document is 16.16 MB of BSON — past MongoDB's
-	// limit — while the same data occupies 1.36 MB in PostgreSQL. Keys move here
-	// from SuiteRemoveKeys once they are no longer response-visible, and the
-	// stripping stays for as long as MongoDB is written to at all.
-	//
-	// Compact spellings are NOT covered here. cn/tw/kr send only the compact
-	// form, and MongoDB is still the read source, so blanking it would drop the
-	// only readable copy until the cutover. Add them after reads come from
-	// PostgreSQL.
-	SuiteMongoOnlyRemoveKeys []string `yaml:"suite_mongo_only_remove_keys"`
 }
 
 type SekaiAPIConfig struct {

@@ -22,7 +22,7 @@ func newStampTestHelper(t *testing.T) (*harukiAPIHelper.HarukiToolboxRouterHelpe
 	t.Cleanup(srv.Close)
 	client := goredis.NewClient(&goredis.Options{Addr: srv.Addr()})
 	t.Cleanup(func() { _ = client.Close() })
-	dbm := harukiDatabase.NewHarukiToolboxDBManager(nil, &harukiRedis.HarukiRedisManager{Redis: client}, nil, nil)
+	dbm := harukiDatabase.NewHarukiToolboxDBManager(nil, &harukiRedis.HarukiRedisManager{Redis: client}, nil)
 	return &harukiAPIHelper.HarukiToolboxRouterHelpers{DBManager: dbm}, srv
 }
 

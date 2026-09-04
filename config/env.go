@@ -25,10 +25,6 @@ func expandEnvPreservingUnknown(content string) string {
 func applyEnvOverrides(cfg *Config) error {
 	overrideString(&cfg.Proxy, "PROXY_URL", "PROXY")
 
-	overrideString(&cfg.MongoDB.URL, "MONGODB_URL")
-	overrideString(&cfg.MongoDB.DB, "MONGODB_DB")
-	overrideString(&cfg.MongoDB.Suite, "MONGODB_SUITE_COLLECTION")
-	overrideString(&cfg.MongoDB.Mysekai, "MONGODB_MYSEKAI_COLLECTION")
 	overrideString(&cfg.MongoDB.PrivateApiSecret, "PRIVATE_API_SECRET")
 	overrideString(&cfg.MongoDB.PrivateApiUserAgent, "PRIVATE_API_USER_AGENT")
 

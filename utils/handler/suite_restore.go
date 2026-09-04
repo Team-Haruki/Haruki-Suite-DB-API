@@ -39,10 +39,6 @@ type SuiteRestoreServiceOptions struct {
 	StructuresFile  map[string]string
 	EnableRegions   []string
 	SuiteRemoveKeys []string
-	// MongoOnlyRemoveKeys are blanked on the way into MongoDB and nowhere else.
-	// Leaving it empty reproduces the historical behaviour exactly: everything
-	// listed in SuiteRemoveKeys is blanked before either store sees it.
-	MongoOnlyRemoveKeys []string
 }
 
 // SuiteRestoreService owns the schema-derived restorers and their degraded
@@ -54,17 +50,6 @@ type SuiteRestoreService struct {
 	structuresFile  map[string]string
 	enableRegions   []string
 	suiteRemoveKeys []string
-	// mongoOnlyRemoveKeys is the second list, and unlike suiteRemoveKeys it is
-	// NOT expanded with compact spellings.
-	//
-	// cn/tw/kr send only the compact form, so expanding here would blank the
-	// only copy MongoDB holds — and MongoDB is still the read source. The
-	// PostgreSQL row would keep the value, but nothing reads it yet, so those
-	// regions would lose the key on the private API until the cutover. Adding
-	// the expansion is safe once reads come from PostgreSQL; until then the
-	// three big keys stay unstripped for cn/tw/kr, which is exactly the state
-	// they have always been in.
-	mongoOnlyRemoveKeys []string
 
 	restorers    map[string]*suiterestore.Restorer
 	sources      map[string]string
@@ -77,11 +62,9 @@ func NewSuiteRestoreService(options SuiteRestoreServiceOptions) *SuiteRestoreSer
 		structuresFile:  copyStringMap(options.StructuresFile),
 		enableRegions:   append([]string(nil), options.EnableRegions...),
 		suiteRemoveKeys: withCompactSpellings(options.SuiteRemoveKeys),
-		// NOT expanded with compact spellings, deliberately — see the field doc.
-		mongoOnlyRemoveKeys: append([]string(nil), options.MongoOnlyRemoveKeys...),
-		restorers:           make(map[string]*suiterestore.Restorer),
-		sources:             make(map[string]string),
-		loadFailures:        make(map[string]string),
+		restorers:       make(map[string]*suiterestore.Restorer),
+		sources:         make(map[string]string),
+		loadFailures:    make(map[string]string),
 	}
 
 	for region, path := range service.structuresFile {
@@ -169,9 +152,7 @@ func normalizeSuiteRestorePurpose(purpose SuiteRestorePurpose) SuiteRestorePurpo
 // stored form is self-describing, an object is compact and an array is row form
 // — so one blanking rule covers both.
 //
-// Applied to the list blanked in EVERY store, where a missed spelling means the
-// key stays readable somewhere. Deliberately NOT applied to the MongoDB-only
-// list; see the mongoOnlyRemoveKeys field doc.
+// A configured removal applies to both row and compact spellings.
 func withCompactSpellings(keys []string) []string {
 	out := make([]string, 0, len(keys)*2)
 	seen := make(map[string]bool, len(keys)*2)
@@ -202,25 +183,6 @@ func blankKeys(suite map[string]any, keys []string) {
 func (s *SuiteRestoreService) cleanSuite(suite map[string]any) map[string]any {
 	blankKeys(suite, s.suiteRemoveKeys)
 	return suite
-}
-
-// StripForMongoStore returns a copy of a suite upload with the MongoDB-only
-// keys blanked, leaving the caller's map — the one the PostgreSQL game-data
-// store receives — untouched.
-//
-// The copy is the whole point. cleanSuite blanks in place, so handing it the
-// upload map would empty the very keys the game-data store exists to keep. A
-// shallow copy is enough: only top-level entries are replaced, never mutated.
-func (s *SuiteRestoreService) StripForMongoStore(suite map[string]any) map[string]any {
-	if s == nil || !s.initialized || len(s.mongoOnlyRemoveKeys) == 0 || suite == nil {
-		return suite
-	}
-	out := make(map[string]any, len(suite))
-	for k, v := range suite {
-		out[k] = v
-	}
-	blankKeys(out, s.mongoOnlyRemoveKeys)
-	return out
 }
 
 func (s *SuiteRestoreService) shouldRestoreSuiteForDB(server utils.SupportedDataUploadServer) bool {

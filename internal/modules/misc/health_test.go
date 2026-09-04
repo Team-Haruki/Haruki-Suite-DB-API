@@ -1,7 +1,9 @@
 package misc
 
 import (
+	"context"
 	"encoding/json"
+	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -90,5 +92,17 @@ func TestHealthHandlerUsesDefensiveSuiteRestoreStatus(t *testing.T) {
 	}
 	if failedRegions["en"] == "mutated outside service" {
 		t.Fatal("health response observed mutation of a previously returned status map")
+	}
+}
+
+func TestDependencyHealthRequiresGameDataAndDoesNotProbeMongo(t *testing.T) {
+	helper := &harukiAPIHelper.HarukiToolboxRouterHelpers{}
+	dependencies := buildDependencyHealth(context.Background(), helper)
+	if _, ok := dependencies["mongo"]; ok {
+		t.Fatal("retired Mongo dependency remains in health response")
+	}
+	entry, ok := dependencies["game_data"].(fiber.Map)
+	if !ok || entry["status"] != "down" {
+		t.Fatalf("missing game-data pool must be unhealthy: %v", dependencies)
 	}
 }

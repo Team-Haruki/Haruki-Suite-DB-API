@@ -1,7 +1,6 @@
 package bootstrap
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	harukiDatabaseManager "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database"
 	harukiGameData "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/gamedata"
 	gamedataCatalog "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/gamedata/catalog"
-	harukiMongo "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/mongo"
 	neopgManager "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/neopg"
 	dbManager "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
@@ -26,16 +24,12 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const resourceCloseTimeout = 5 * time.Second
-
 // applicationResources is a bootstrap-only record of concrete process
 // resources. It deliberately stays private to the composition root and is not
 // passed into business modules as a dependency container.
 type applicationResources struct {
 	logger          *harukiLogger.Logger
 	sekaiAPIClient  *harukiSekaiAPIClient.HarukiSekaiAPIClient
-	mongoManager    *harukiMongo.MongoDBManager
-	mongoPoolStats  *harukiMongo.PoolStats
 	redisClient     *harukiRedis.HarukiRedisManager
 	toolboxSQLDB    *sql.DB
 	toolboxClient   *dbManager.Client
@@ -71,30 +65,6 @@ func acquireApplicationResources(cfg harukiConfig.Config, owner *Application) (*
 
 	resources.sekaiAPIClient = harukiSekaiAPIClient.NewHarukiSekaiAPIClient(cfg.SekaiAPI.APIEndpoint, cfg.SekaiAPI.APIToken)
 
-	var mongoOpts []harukiMongo.MongoOption
-	if cfg.Backend.ProfilingEnabled {
-		resources.mongoPoolStats = harukiMongo.NewPoolStats()
-		mongoOpts = append(mongoOpts, harukiMongo.WithPoolMonitor(resources.mongoPoolStats.Monitor()))
-	}
-	mongoCtx, cancelMongoInit := startupContext()
-	resources.mongoManager, err = harukiMongo.NewMongoDBManager(
-		mongoCtx,
-		cfg.MongoDB.URL,
-		cfg.MongoDB.DB,
-		cfg.MongoDB.Suite,
-		cfg.MongoDB.Mysekai,
-		mongoOpts...,
-	)
-	cancelMongoInit()
-	if err != nil {
-		return nil, fmt.Errorf("init MongoDB: %w", err)
-	}
-	owner.addResourceCloser("MongoDB", func() error {
-		closeCtx, cancel := context.WithTimeout(context.Background(), resourceCloseTimeout)
-		defer cancel()
-		return resources.mongoManager.Disconnect(closeCtx)
-	})
-
 	resources.redisClient = harukiRedis.NewRedisClient(cfg.Redis, cfg.UserSystem.SessionSignToken)
 	owner.addResourceCloser("Redis", resources.redisClient.Close)
 	redisCtx, cancelRedisInit := startupContext()
@@ -114,48 +84,45 @@ func acquireApplicationResources(cfg harukiConfig.Config, owner *Application) (*
 		return nil, err
 	}
 
-	// The game-data pool is optional while the cutover is in flight: with no
-	// `game_data.url` configured the backend keeps serving suite/mysekai out of
-	// MongoDB exactly as before. Once configured it is a hard dependency, so a
-	// bad DSN fails startup rather than surfacing on the first request.
-	if cfg.GameData.URL != "" {
-		gameDataCtx, cancelGameDataInit := startupContext()
-		resources.gameDataPool, err = harukiGameData.NewPool(gameDataCtx, harukiGameData.PoolConfig{
-			URL:      cfg.GameData.URL,
-			MaxConns: int32(cfg.GameData.MaxConns),
-			MinConns: int32(cfg.GameData.MinConns),
-		})
-		cancelGameDataInit()
-		if err != nil {
-			return nil, fmt.Errorf("init game data PostgreSQL: %w", err)
-		}
-		owner.addResourceCloser("Game Data PostgreSQL", resources.gameDataPool.Close)
-		resources.gameDataService = harukiGameData.NewService(
-			resources.gameDataPool,
-			cfg.GameData.ReadSource == harukiConfig.GameDataReadPostgres,
-		)
+	// Game data is a required PostgreSQL dependency.
+	if cfg.GameData.URL == "" {
+		return nil, fmt.Errorf("game_data.url is required")
+	}
+	gameDataCtx, cancelGameDataInit := startupContext()
+	resources.gameDataPool, err = harukiGameData.NewPool(gameDataCtx, harukiGameData.PoolConfig{
+		URL:      cfg.GameData.URL,
+		MaxConns: int32(cfg.GameData.MaxConns),
+		MinConns: int32(cfg.GameData.MinConns),
+	})
+	cancelGameDataInit()
+	if err != nil {
+		return nil, fmt.Errorf("init game data PostgreSQL: %w", err)
+	}
+	owner.addResourceCloser("Game Data PostgreSQL", resources.gameDataPool.Close)
+	resources.gameDataService = harukiGameData.NewService(
+		resources.gameDataPool,
+	)
 
-		schemaCtx, cancelGameDataSchema := startupContext()
-		states, schemaErr := harukiGameData.EnsureSchema(
-			schemaCtx, resources.gameDataPool, cfg.Backend.AutoMigrate,
-			gamedataCatalog.Suite(), gamedataCatalog.Mysekai(),
-		)
-		cancelGameDataSchema()
-		if schemaErr != nil {
-			return nil, fmt.Errorf("init game data schema: %w", schemaErr)
-		}
-		for _, st := range states {
-			switch {
-			case st.Created:
-				resources.logger.Infof("game data table %s created from catalog %s", st.Table, st.Checksum)
-			case len(st.UnknownColumns) > 0:
-				// Not fatal: a rollback leaves columns this build no longer
-				// names, and their rows stay readable.
-				resources.logger.Warnf("game data table %s has %d column(s) this build does not know (first: %s)",
-					st.Table, len(st.UnknownColumns), st.UnknownColumns[0])
-			default:
-				resources.logger.Infof("game data table %s matches catalog %s", st.Table, st.Checksum)
-			}
+	schemaCtx, cancelGameDataSchema := startupContext()
+	states, schemaErr := harukiGameData.EnsureSchema(
+		schemaCtx, resources.gameDataPool, cfg.Backend.AutoMigrate,
+		gamedataCatalog.Suite(), gamedataCatalog.Mysekai(),
+	)
+	cancelGameDataSchema()
+	if schemaErr != nil {
+		return nil, fmt.Errorf("init game data schema: %w", schemaErr)
+	}
+	for _, st := range states {
+		switch {
+		case st.Created:
+			resources.logger.Infof("game data table %s created from catalog %s", st.Table, st.Checksum)
+		case len(st.UnknownColumns) > 0:
+			// Not fatal: a rollback leaves columns this build no longer
+			// names, and their rows stay readable.
+			resources.logger.Warnf("game data table %s has %d column(s) this build does not know (first: %s)",
+				st.Table, len(st.UnknownColumns), st.UnknownColumns[0])
+		default:
+			resources.logger.Infof("game data table %s matches catalog %s", st.Table, st.Checksum)
 		}
 	}
 
@@ -163,7 +130,6 @@ func acquireApplicationResources(cfg harukiConfig.Config, owner *Application) (*
 	resources.databaseManager = harukiDatabaseManager.NewHarukiToolboxDBManager(
 		resources.toolboxClient,
 		resources.redisClient,
-		resources.mongoManager,
 		resources.gameDataService,
 	)
 	return resources, nil

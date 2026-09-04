@@ -36,16 +36,11 @@ var legacyAggregateFields = map[string][]string{
 		"allowedKeysMu",
 		"runtimeConfigMu",
 	},
-	// GameData is not a new process service: it is the PostgreSQL store that
-	// REPLACES Mongo for suite/mysekai game data. Both entries are removed
-	// together when MongoDB is decommissioned, so the aggregate ends up one
-	// field smaller than it started. See
-	// docs/database-consolidation-plan.zh-CN.md.
+	// GameData replaces Mongo and owns a separate PostgreSQL pool.
 	"utils/database/manager.go:HarukiToolboxDBManager": {
 		"BotDB",
 		"DB",
 		"GameData",
-		"Mongo",
 		"Redis",
 	},
 }

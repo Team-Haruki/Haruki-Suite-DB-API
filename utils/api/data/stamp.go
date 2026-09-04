@@ -160,15 +160,13 @@ func readUploadTime(
 	dataType harukiUtils.UploadDataType,
 	userID int64,
 ) (int64, bool, error) {
-	if gd := apiHelper.DBManager.GameData; gd.ReadsFromPostgres() {
-		collection := "mysekai"
-		if dataType == harukiUtils.UploadDataTypeSuite {
-			collection = "suite"
-		}
-		return gd.StoreFor(collection).UploadTime(ctx, userID, string(server))
-	}
-	if apiHelper.DBManager.Mongo == nil {
+	gd := apiHelper.DBManager.GameData
+	if gd == nil {
 		return 0, false, fmt.Errorf("no game data store is configured")
 	}
-	return apiHelper.DBManager.Mongo.GetUploadTime(ctx, userID, string(server), dataType)
+	collection := "mysekai"
+	if dataType == harukiUtils.UploadDataTypeSuite {
+		collection = "suite"
+	}
+	return gd.StoreFor(collection).UploadTime(ctx, userID, string(server))
 }

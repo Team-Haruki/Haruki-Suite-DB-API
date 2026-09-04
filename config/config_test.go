@@ -390,29 +390,14 @@ func TestNewAllowlistSpellingWinsOverTheDeprecatedOne(t *testing.T) {
 	}
 }
 
-// The read source defaults to mongo, so deploying the cutover code changes
-// nothing until the flip is made deliberately.
-func TestGameDataReadSourceDefaultsToMongo(t *testing.T) {
+// PostgreSQL is the only supported source after migration acceptance.
+func TestGameDataReadSourceDefaultsToPostgres(t *testing.T) {
 	cfg := Config{}
 	if err := normalizeConfigDefaults(&cfg); err != nil {
 		t.Fatal(err)
 	}
-	if cfg.GameData.ReadSource != GameDataReadMongo {
-		t.Fatalf("ReadSource = %q, want %q", cfg.GameData.ReadSource, GameDataReadMongo)
-	}
-}
-
-// Pointing reads at PostgreSQL without a DSN would start cleanly and then fail
-// every request; refuse at boot instead.
-func TestPostgresReadSourceRequiresAURL(t *testing.T) {
-	cfg := Config{}
-	cfg.GameData.ReadSource = GameDataReadPostgres
-	if err := normalizeConfigDefaults(&cfg); err == nil {
-		t.Fatal("postgres read source accepted with no URL")
-	}
-	cfg.GameData.URL = "postgres://u@h/db"
-	if err := normalizeConfigDefaults(&cfg); err != nil {
-		t.Fatalf("valid postgres read source rejected: %v", err)
+	if cfg.GameData.ReadSource != GameDataReadPostgres {
+		t.Fatalf("ReadSource = %q, want %q", cfg.GameData.ReadSource, GameDataReadPostgres)
 	}
 }
 

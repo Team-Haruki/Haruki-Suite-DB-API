@@ -108,7 +108,7 @@ Hydra 在当前项目里负责：
 关键步骤：
 
 1. 加载配置并校验 Ory 必需项
-2. 初始化 PostgreSQL、MongoDB、Redis
+2. 初始化 PostgreSQL（业务库与游戏数据库）、Redis
 3. 创建 `SessionHandler`
 4. 调用 `ConfigureIdentityProvider(...)` 注入 Kratos 配置
 5. 调用 `ConfigureAuthProxy(...)` 注入 Oathkeeper/Auth Proxy 配置

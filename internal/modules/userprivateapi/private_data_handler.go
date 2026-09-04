@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/gofiber/fiber/v3"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"golang.org/x/sync/singleflight"
@@ -289,55 +288,27 @@ func renderPrivateData(
 	userID int64,
 	requestKey string,
 ) ([]byte, bool, error) {
-	if gd := apiHelper.DBManager.GameData; gd.ReadsFromPostgres() {
-		store := gd.Suite()
-		if dataType != harukiUtils.UploadDataTypeSuite {
-			store = gd.Mysekai()
+	gd := apiHelper.DBManager.GameData
+	store := gd.Suite()
+	if dataType != harukiUtils.UploadDataTypeSuite {
+		store = gd.Mysekai()
+	}
+	var renderKeys []string
+	var fetchKeys []string
+	if requestKey != "" {
+		renderKeys = strings.Split(requestKey, ",")
+		for _, k := range renderKeys {
+			fetchKeys = append(fetchKeys, strings.TrimSpace(k))
 		}
-		var renderKeys []string
-		var fetchKeys []string
-		if requestKey != "" {
-			renderKeys = strings.Split(requestKey, ",")
-			for _, k := range renderKeys {
-				fetchKeys = append(fetchKeys, strings.TrimSpace(k))
-			}
+	}
+	body, err := data.PrivateBodyFromPostgres(ctx, store, userID, string(server), fetchKeys, renderKeys)
+	if err != nil {
+		if fe, ok := err.(*fiber.Error); ok && fe.Code == fiber.StatusNotFound {
+			return nil, false, nil
 		}
-		body, err := data.PrivateBodyFromPostgres(ctx, store, userID, string(server), fetchKeys, renderKeys)
-		if err != nil {
-			if fe, ok := err.(*fiber.Error); ok && fe.Code == fiber.StatusNotFound {
-				return nil, false, nil
-			}
-			return nil, false, err
-		}
-		return body, true, nil
+		return nil, false, err
 	}
-
-	result, fetchErr := fetchPrivateData(ctx, apiHelper, server, dataType, userID, requestKey)
-	if fetchErr != nil {
-		return nil, false, fetchErr
-	}
-	if len(result) == 0 {
-		return nil, false, nil
-	}
-	encoded, encErr := sonic.Marshal(buildPrivateDataResponse(requestKey, result))
-	if encErr != nil {
-		return nil, false, encErr
-	}
-	return encoded, true, nil
-}
-
-func fetchPrivateData(
-	ctx context.Context,
-	apiHelper *harukiApiHelper.HarukiToolboxRouterHelpers,
-	server harukiUtils.SupportedDataUploadServer,
-	dataType harukiUtils.UploadDataType,
-	userID int64,
-	requestKey string,
-) (bson.D, error) {
-	if projection := buildKeyProjection(requestKey); projection != nil {
-		return apiHelper.DBManager.Mongo.GetDataWithProjection(ctx, userID, string(server), dataType, projection)
-	}
-	return apiHelper.DBManager.Mongo.GetData(ctx, userID, string(server), dataType)
+	return body, true, nil
 }
 
 // buildKeyProjection returns an inclusion projection limited to the requested keys,

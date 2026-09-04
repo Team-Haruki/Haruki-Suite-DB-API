@@ -32,11 +32,7 @@ user_system:
   frontend_url: ""
   social_platform_verify_token: ""
 
-mongodb:
-  url: "mongodb://user:pass@mongo"
-  db: "collections"
-  suite: "suite"
-  mysekai: "mysekai"
+mongodb: # Legacy namespace for private API credentials; no MongoDB connection
   private_api_secret: "Bearer "
   private_api_user_agent: ""
 
@@ -45,13 +41,8 @@ mongodb:
 # (text protocol), while these reads move whole json columns as bytes.
 game_data:
   url: "postgres://user:pass@localhost:5432/haruki_gamedata?sslmode=disable"
-  # Which datastore serves game-data reads: "mongo" (default) or "postgres".
-  # Flip to "postgres" inside the read-only maintenance window, after the
-  # backfill has been verified. Flipping REQUIRES wiping the game-data Redis
-  # namespace in the same step: no cache key records which datastore produced a
-  # body, so a stamp minted against one store would answer 304 for a body built
-  # by the other.
-  read_source: "mongo"
+  # PostgreSQL is the only supported read and write source.
+  read_source: "postgres"
   # 0 keeps pgx's default ceiling (max(4, NumCPU)).
   max_conns: 0
   # 0 means "same as max_conns". Leave it there: pgx opens connections lazily,
@@ -167,37 +158,7 @@ sekai_client:
     Host: ""
   en_server_inherit_client_headers:
     Host: ""
-  suite_remove_keys:
-    - "userInherit"
-    - "userMaterials"
-    - "userActionSets"
-    - "userInformations"
-    - "userProfileHonors"
-    - "userCustomProfiles"
-    - "userEventExchanges"
-    - "userMissionStatuses"
-    - "userBillingShopItems"
-    - "userReleaseConditions"
-    - "userCostume3dStatuses"
-    - "userCostume3dShopItems"
-    - "userCustomProfileCards"
-    - "userUnitEpisodeStatuses"
-    - "userCustomProfileGachas"
-    - "userEventEpisodeStatuses"
-    - "userSpecialEpisodeStatuses"
-    - "userCustomProfileResources"
-    - "userArchiveEventEpisodeStatuses"
-    - "userCustomProfileResourceUsages"
-    - "userCharacterProfileEpisodeStatuses"
-  # Blanked on the way into MongoDB only — the PostgreSQL game-data store keeps
-  # them in full. This is the 16 MB document-limit protection, not a data policy:
-  # a real heavy jp account is 16.16 MB of BSON unstripped and cannot be written
-  # to MongoDB at all, while the same upload occupies 1.36 MB in PostgreSQL.
-  # Move a key here from suite_remove_keys once exposing it no longer changes an
-  # API response. Compact spellings are NOT covered here: cn/tw/kr send only the
-  # compact form and MongoDB is still the read source, so blanking it would drop
-  # the only readable copy until the cutover.
-  suite_mongo_only_remove_keys: []
+  suite_remove_keys: []
 
 
 haruki_bot:
