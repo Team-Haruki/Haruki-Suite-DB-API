@@ -5,13 +5,36 @@ type RestoreSuiteConfig struct {
 	StructuresFile map[string]string `yaml:"structures_file"`
 }
 
+// MongoDBConfig retains the legacy YAML namespace for private API credentials only.
+// It no longer configures a database connection.
 type MongoDBConfig struct {
-	URL                 string `yaml:"url"`
-	DB                  string `yaml:"db"`
-	Suite               string `yaml:"suite"`
-	Mysekai             string `yaml:"mysekai"`
 	PrivateApiSecret    string `yaml:"private_api_secret"`
 	PrivateApiUserAgent string `yaml:"private_api_user_agent"`
+}
+
+// GameDataConfig configures the dedicated PostgreSQL store for Project Sekai
+// suite/mysekai game data. It is a SEPARATE pool from the Ent/user-system one:
+// that pool speaks the lib/pq text protocol, and these reads move whole json
+// columns as bytes.
+// GameDataReadSource selects which datastore serves game-data reads.
+type GameDataReadSource string
+
+const (
+	// GameDataReadPostgres is the post-cutover source.
+	GameDataReadPostgres GameDataReadSource = "postgres"
+)
+
+type GameDataConfig struct {
+	URL string `yaml:"url"`
+	// ReadSource accepts only postgres; retained to reject stale Mongo deployments.
+	ReadSource GameDataReadSource `yaml:"read_source"`
+	// MaxConns is the pool ceiling. 0 leaves pgx's default (max(4, NumCPU)).
+	MaxConns int `yaml:"max_conns"`
+	// MinConns is how many connections are opened eagerly. 0 means "same as
+	// MaxConns", which is the intended setting: pgx builds connections lazily,
+	// so an unwarmed pool reports a spurious EmptyAcquireCount equal to the
+	// worker count on the first burst after every restart.
+	MinConns int `yaml:"min_conns"`
 }
 
 type RedisConfig struct {
@@ -111,7 +134,7 @@ type BackendConfig struct {
 	BackendURL       string   `yaml:"backend_url"`
 	BackendCDNURL    string   `yaml:"backend_cdn_url"`
 	// ProfilingEnabled turns on opt-in performance instrumentation: a periodic
-	// Mongo/PG pool + Go GC stats sampler and slow-request autopsies. Off by default;
+	// PG pool + Go GC stats sampler and slow-request autopsies. Off by default;
 	// safe to flip on during an incident to diagnose resource saturation.
 	ProfilingEnabled bool `yaml:"profiling_enabled"`
 	// ProfilingIntervalSeconds is how often the stats sampler logs (default 15s).
@@ -166,7 +189,9 @@ type SekaiClientConfig struct {
 	ENServerAppVersionUrl        string            `yaml:"en_server_app_version_url"`
 	JPServerInheritClientHeaders map[string]string `yaml:"jp_server_inherit_client_headers"`
 	ENServerInheritClientHeaders map[string]string `yaml:"en_server_inherit_client_headers"`
-	SuiteRemoveKeys              []string          `yaml:"suite_remove_keys"`
+	// SuiteRemoveKeys optionally discard fields before PostgreSQL persistence.
+	// Keep empty to retain full uploads; API projections control public access.
+	SuiteRemoveKeys []string `yaml:"suite_remove_keys"`
 }
 
 type SekaiAPIConfig struct {
@@ -175,7 +200,16 @@ type SekaiAPIConfig struct {
 }
 
 type OthersConfig struct {
-	PublicAPIAllowedKeys []string `yaml:"public_api_allowed_keys"`
+	// AllowedKeys bounds which top-level game-data keys every NON-PRIVATE API
+	// may serve. One list, shared by the public API, the OAuth2 game-data
+	// endpoint and the owned-account endpoint. The private API is not bound by
+	// it — it is an internal surface with no external callers.
+	//
+	// DeprecatedPublicAPIAllowedKeys is the former name of the same field, still
+	// read so an existing config file keeps working; it is folded into
+	// AllowedKeys during normalisation.
+	AllowedKeys                    []string `yaml:"allowed_keys"`
+	DeprecatedPublicAPIAllowedKeys []string `yaml:"public_api_allowed_keys"`
 }
 
 type OAuth2Config struct {
@@ -191,6 +225,7 @@ type OAuth2Config struct {
 type Config struct {
 	Proxy                  string                       `yaml:"proxy"`
 	MongoDB                MongoDBConfig                `yaml:"mongodb"`
+	GameData               GameDataConfig               `yaml:"game_data"`
 	Redis                  RedisConfig                  `yaml:"redis"`
 	Webhook                WebhookConfig                `yaml:"webhook"`
 	Afdian                 AfdianConfig                 `yaml:"afdian"`

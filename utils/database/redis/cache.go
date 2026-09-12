@@ -2,17 +2,19 @@ package redis
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
-	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/bytedance/sonic"
+	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
+	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsoncodec"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -154,12 +156,12 @@ func getQueryHash(queryString string) string {
 	if queryString == "" {
 		return emptyQueryHash
 	}
-	hash := md5.Sum([]byte(queryString))
+	hash := sha256.Sum256([]byte(queryString))
 	return hex.EncodeToString(hash[:])
 }
 
 func (r *HarukiRedisManager) SetCache(ctx context.Context, key string, value any, ttl time.Duration) error {
-	data, err := sonic.Marshal(value)
+	data, err := jsoncodec.Marshal(value)
 	if err != nil {
 		harukiLogger.Errorf("Failed to marshal cache value for key %s: %v", key, err)
 		return err
@@ -187,7 +189,7 @@ func (r *HarukiRedisManager) SetCachesAtomically(ctx context.Context, items []Ca
 		if item.Key == "" {
 			return fmt.Errorf("cache key at index %d is empty", i)
 		}
-		data, err := sonic.Marshal(item.Value)
+		data, err := jsoncodec.Marshal(item.Value)
 		if err != nil {
 			harukiLogger.Errorf("Failed to marshal cache value for key %s: %v", item.Key, err)
 			return err
@@ -215,7 +217,7 @@ func (r *HarukiRedisManager) GetCache(ctx context.Context, key string, out any) 
 		harukiLogger.Errorf("Failed to get redis cache for key %s: %v", key, err)
 		return false, err
 	}
-	if err := sonic.Unmarshal([]byte(val), out); err != nil {
+	if err := jsoncodec.Unmarshal([]byte(val), out); err != nil {
 		harukiLogger.Errorf("Failed to unmarshal cache value for key %s: %v", key, err)
 		return true, err
 	}
@@ -257,7 +259,7 @@ func (r *HarukiRedisManager) SetRawCache(ctx context.Context, key string, value 
 }
 
 func (r *HarukiRedisManager) DeleteCacheIfValueMatches(ctx context.Context, key, expected string) (bool, error) {
-	encodedExpected, err := sonic.Marshal(expected)
+	encodedExpected, err := jsoncodec.Marshal(expected)
 	if err != nil {
 		harukiLogger.Errorf("Failed to marshal expected cache value for key %s: %v", key, err)
 		return false, err
