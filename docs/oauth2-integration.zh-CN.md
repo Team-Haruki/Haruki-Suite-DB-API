@@ -608,3 +608,7 @@ flowchart LR
 **保密客户端：**
 
 > 申请 `confidential` client，浏览器授权流程完全相同，但在你自己的后端回调页使用 `client_secret_basic` 换 token，并保存 refresh token 用于后续代表用户调用资源接口。
+
+## JSON 请求兼容性（Go 1.27）
+
+后端 JSON 解码已迁移到 json/v2。请使用文档中 JSON 字段的准确大小写；重复字段、非法 UTF-8 和尾随的第二个 JSON 值会被拒绝。HTTP 响应保留 nil 集合的 null 表示，以及可选布尔字段中省略与 false 的区别。游戏账号的大整数 ID 请优先读取字符串字段。详细变更见 [迁移记录](go127-jsonv2-migration.zh-CN.md)。

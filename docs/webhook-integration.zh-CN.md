@@ -211,3 +211,7 @@ https://example.com/apiwebhook/jp/suite/123456789
 
 - `token`: 用于调用 Haruki 的 `/api/webhook/...` 管理订阅接口
 - `bearer`: Haruki 在回调你的 `callbackUrl` 时，附带给你的 Authorization 凭证
+
+## 后台调度与到达时间
+
+上传数据持久化后，普通 Webhook、OAuth2 Webhook 和第三方数据同步由受跟踪的后台父任务执行。后台拥塞时会等待可用容量，通知到达和上传响应可能延后，不会仅因容量满而丢弃本次任务。此机制仍是进程内调度，不提供进程崩溃后的持久重投保证；现有签名、鉴权、事件格式及各投递实现的重试行为不变。
