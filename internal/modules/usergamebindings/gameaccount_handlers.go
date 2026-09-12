@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"strings"
+	"time"
+
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	userEmailModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/useremail"
 	platformMailNotify "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/mailnotify"
@@ -14,8 +17,6 @@ import (
 	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
-	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -56,7 +57,7 @@ func handleGenerateGameAccountVerificationCode(apiHelper *harukiAPIHelper.Haruki
 			Message:         "ok",
 			OneTimePassword: code,
 		}
-		return harukiAPIHelper.ResponseWithStruct(c, fiber.StatusOK, resp)
+		return harukiAPIHelper.Responses.ResponseWithStruct(c, fiber.StatusOK, resp)
 	}
 }
 
@@ -113,7 +114,7 @@ func handleCreateGameAccountBinding(apiHelper *harukiAPIHelper.HarukiToolboxRout
 			result = harukiAPIHelper.SystemLogResultSuccess
 			reason = "already_verified"
 			harukiLogger.Infof("[GameAccountBinding] existing verified binding found, short-circuiting")
-			return harukiAPIHelper.SuccessResponse(c, "account already verified", &ud)
+			return harukiAPIHelper.Responses.SuccessResponse(c, "account already verified", &ud)
 		case existingBindingStateOwnedByOther:
 			if bindingOwnerBanned(existing) {
 				reason = "binding_owner_banned"
@@ -131,7 +132,7 @@ func handleCreateGameAccountBinding(apiHelper *harukiAPIHelper.HarukiToolboxRout
 			} else {
 				harukiLogger.Infof("[GameAccountBinding] verification code lookup rejected: %v", err)
 			}
-			return harukiAPIHelper.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
 		}
 		harukiLogger.Infof("[GameAccountBinding] verification code found, proceeding to Sekai API verification")
 
@@ -143,7 +144,7 @@ func handleCreateGameAccountBinding(apiHelper *harukiAPIHelper.HarukiToolboxRout
 			} else {
 				harukiLogger.Infof("[GameAccountBinding] verifyGameAccountOwnership rejected: %v", err)
 			}
-			return harukiAPIHelper.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
 		}
 		harukiLogger.Infof("[GameAccountBinding] verifyGameAccountOwnership PASSED, saving binding")
 
@@ -155,7 +156,7 @@ func handleCreateGameAccountBinding(apiHelper *harukiAPIHelper.HarukiToolboxRout
 			} else {
 				reason = "verification_code_expired"
 			}
-			return harukiAPIHelper.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
 		}
 
 		saveResult, err := saveGameAccountBinding(ctx, apiHelper, existing, serverStr, gameUserIDStr, userID, req)
@@ -198,7 +199,7 @@ func handleCreateGameAccountBinding(apiHelper *harukiAPIHelper.HarukiToolboxRout
 		} else {
 			reason = "ok"
 		}
-		return harukiAPIHelper.SuccessResponse(c, "verification succeeded", &ud)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "verification succeeded", &ud)
 	}
 }
 
@@ -251,7 +252,7 @@ func handleUpdateGameAccountBinding(apiHelper *harukiAPIHelper.HarukiToolboxRout
 		}
 		if bindingOwnerMissing(existing) {
 			reason = "binding_owner_missing"
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusConflict, "binding owner missing", nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusConflict, "binding owner missing", nil)
 		}
 		if !isBindingOwnedByUser(existing, userID) {
 			reason = "binding_owned_by_other_user"
@@ -326,7 +327,7 @@ func handleUpdateGameAccountBinding(apiHelper *harukiAPIHelper.HarukiToolboxRout
 		}
 		result = harukiAPIHelper.SystemLogResultSuccess
 		reason = "ok"
-		return harukiAPIHelper.SuccessResponse(c, "binding updated successfully", &ud)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "binding updated successfully", &ud)
 	}
 }
 
@@ -374,7 +375,7 @@ func handleDeleteGameAccountBinding(apiHelper *harukiAPIHelper.HarukiToolboxRout
 
 		if bindingOwnerMissing(existing) {
 			reason = "binding_owner_missing"
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusConflict, "binding owner missing", nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusConflict, "binding owner missing", nil)
 		}
 
 		if !isBindingOwnedByUser(existing, userID) {
@@ -401,6 +402,6 @@ func handleDeleteGameAccountBinding(apiHelper *harukiAPIHelper.HarukiToolboxRout
 		}
 		result = harukiAPIHelper.SystemLogResultSuccess
 		reason = "ok"
-		return harukiAPIHelper.SuccessResponse(c, "binding deleted successfully", &ud)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "binding deleted successfully", &ud)
 	}
 }

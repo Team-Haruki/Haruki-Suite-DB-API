@@ -1,14 +1,15 @@
 package adminrisk
 
 import (
+	"slices"
+	"strconv"
+	"strings"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	platformPagination "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/pagination"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/riskevent"
-	"slices"
-	"strconv"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -54,7 +55,7 @@ func handleListRiskEvents(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers)
 			Sort:        filters.Sort,
 			Items:       buildRiskEventItems(rows),
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -127,7 +128,7 @@ func handleCreateRiskEvent(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers
 			"severity":    severity,
 		})
 		items := buildRiskEventItems([]*postgresql.RiskEvent{row})
-		return harukiAPIHelper.SuccessResponse(c, "risk event created", &items[0])
+		return harukiAPIHelper.Responses.SuccessResponse(c, "risk event created", &items[0])
 	}
 }
 
@@ -190,6 +191,6 @@ func handleResolveRiskEvent(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelper
 			"status": string(updated.Status),
 		})
 		items := buildRiskEventItems([]*postgresql.RiskEvent{updated})
-		return harukiAPIHelper.SuccessResponse(c, "risk event resolved", &items[0])
+		return harukiAPIHelper.Responses.SuccessResponse(c, "risk event resolved", &items[0])
 	}
 }

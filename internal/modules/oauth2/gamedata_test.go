@@ -1,8 +1,9 @@
 package oauth2
 
 import (
-	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"testing"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 )

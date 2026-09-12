@@ -1,10 +1,11 @@
 package admin
 
 import (
+	"strings"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -18,15 +19,15 @@ type publicAPIKeysResponse struct {
 }
 
 type runtimeConfigPayload struct {
-	AllowedKeys          *([]string) `json:"publicApiAllowedKeys,omitempty"`
-	PrivateAPIToken      *string     `json:"privateApiToken,omitempty"`
-	PrivateAPIUserAgent  *string     `json:"privateApiUserAgent,omitempty"`
-	HarukiProxyUserAgent *string     `json:"harukiProxyUserAgent,omitempty"`
-	HarukiProxyVersion   *string     `json:"harukiProxyVersion,omitempty"`
-	HarukiProxySecret    *string     `json:"harukiProxySecret,omitempty"`
-	HarukiProxyUnpackKey *string     `json:"harukiProxyUnpackKey,omitempty"`
-	WebhookJWTSecret     *string     `json:"webhookJwtSecret,omitempty"`
-	WebhookEnabled       *bool       `json:"webhookEnabled,omitempty"`
+	AllowedKeys          *([]string) `json:"publicApiAllowedKeys,omitzero"`
+	PrivateAPIToken      *string     `json:"privateApiToken,omitzero"`
+	PrivateAPIUserAgent  *string     `json:"privateApiUserAgent,omitzero"`
+	HarukiProxyUserAgent *string     `json:"harukiProxyUserAgent,omitzero"`
+	HarukiProxyVersion   *string     `json:"harukiProxyVersion,omitzero"`
+	HarukiProxySecret    *string     `json:"harukiProxySecret,omitzero"`
+	HarukiProxyUnpackKey *string     `json:"harukiProxyUnpackKey,omitzero"`
+	WebhookJWTSecret     *string     `json:"webhookJwtSecret,omitzero"`
+	WebhookEnabled       *bool       `json:"webhookEnabled,omitzero"`
 }
 
 type runtimeConfigResponse struct {
@@ -123,7 +124,7 @@ func handleGetPublicAPIAllowedKeys(apiHelper *harukiAPIHelper.HarukiToolboxRoute
 	return func(c fiber.Ctx) error {
 		keys := apiHelper.GetAllowedKeys()
 		resp := publicAPIKeysResponse{AllowedKeys: keys}
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -156,14 +157,14 @@ func handleUpdatePublicAPIAllowedKeys(apiHelper *harukiAPIHelper.HarukiToolboxRo
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionConfigPublicAPIKeysUpdate, adminAuditTargetTypeConfig, "public_api_allowed_keys", harukiAPIHelper.SystemLogResultSuccess, map[string]any{
 			"keyCount": len(sanitizedKeys),
 		})
-		return harukiAPIHelper.SuccessResponse(c, "public api keys updated", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "public api keys updated", &resp)
 	}
 }
 
 func handleGetRuntimeConfig(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		resp := buildRuntimeConfigResponse(apiHelper)
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -252,6 +253,6 @@ func handleUpdateRuntimeConfig(apiHelper *harukiAPIHelper.HarukiToolboxRouterHel
 			"updatedWebhookSecret": webhookJWTSecret != nil,
 			"updatedWebhookFlag":   payload.WebhookEnabled != nil,
 		})
-		return harukiAPIHelper.SuccessResponse(c, "runtime config updated", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "runtime config updated", &resp)
 	}
 }

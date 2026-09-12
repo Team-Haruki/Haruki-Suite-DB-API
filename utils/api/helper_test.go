@@ -1,10 +1,11 @@
 package api
 
 import (
+	"testing"
+
 	platformRuntimeConfig "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/runtimeconfig"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database"
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
-	"testing"
 
 	goredis "github.com/redis/go-redis/v9"
 )

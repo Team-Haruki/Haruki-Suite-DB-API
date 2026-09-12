@@ -108,6 +108,6 @@ func handleQueryUploadLogs(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers
 			Items: adminCoreModule.BuildUploadLogItems(rows),
 		}
 
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }

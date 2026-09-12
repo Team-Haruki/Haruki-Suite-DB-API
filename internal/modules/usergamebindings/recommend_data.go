@@ -3,15 +3,16 @@ package usergamebindings
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
+	"time"
+
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiAPIData "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api/data"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -141,7 +142,7 @@ func handleGetDeckRecommendData(apiHelper *harukiAPIHelper.HarukiToolboxRouterHe
 			Mode:       mode,
 			UserData:   userData,
 		}
-		return harukiAPIHelper.SuccessResponse(c, "ok", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ok", &resp)
 	}
 }
 
@@ -158,7 +159,7 @@ func respondVerifiedGameAccountDataError(c fiber.Ctx, err error) error {
 		case fiber.StatusNotFound:
 			return harukiAPIHelper.ErrorNotFound(c, fiberErr.Message)
 		case fiber.StatusConflict:
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusConflict, fiberErr.Message, nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusConflict, fiberErr.Message, nil)
 		default:
 			return harukiAPIHelper.ErrorInternal(c, fiberErr.Message)
 		}

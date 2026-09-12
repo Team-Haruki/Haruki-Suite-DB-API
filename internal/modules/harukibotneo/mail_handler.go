@@ -2,11 +2,12 @@ package harukibotneo
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/smtp"
-	"strconv"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -79,6 +80,6 @@ func handleSendMail(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) fiber
 			return harukiAPIHelper.ErrorInternal(c, "failed to send verification email")
 		}
 
-		return harukiAPIHelper.SuccessResponse[string](c, "verification code sent", nil)
+		return harukiAPIHelper.Responses.SuccessResponse[string](c, "verification code sent", nil)
 	}
 }

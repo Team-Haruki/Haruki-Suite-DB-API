@@ -2,14 +2,15 @@ package usergamebindings
 
 import (
 	"context"
+	"strconv"
+	"strings"
+	"time"
+
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api/data"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -149,27 +150,27 @@ func sendOwnedGameAccountProfile(c fiber.Ctx, apiHelper *harukiAPIHelper.HarukiT
 	if err != nil {
 		if resultInfo != nil {
 			if !resultInfo.ServerAvailable {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "game server unavailable", nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "game server unavailable", nil)
 			}
 			if !resultInfo.AccountExists {
 				return harukiAPIHelper.ErrorNotFound(c, "game account not found")
 			}
 		}
 		harukiLogger.Errorf("Failed to query game account profile: %v", err)
-		return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "failed to query game account profile", nil)
+		return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "failed to query game account profile", nil)
 	}
 	if resultInfo == nil {
 		harukiLogger.Errorf("Sekai API profile response missing result info")
-		return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "failed to query game account profile", nil)
+		return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "failed to query game account profile", nil)
 	}
 	if !resultInfo.ServerAvailable {
-		return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "game server unavailable", nil)
+		return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "game server unavailable", nil)
 	}
 	if !resultInfo.AccountExists {
 		return harukiAPIHelper.ErrorNotFound(c, "game account not found")
 	}
 	if !resultInfo.Body || len(body) == 0 {
-		return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "empty game account profile response", nil)
+		return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusBadGateway, "empty game account profile response", nil)
 	}
 
 	c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSONCharsetUTF8)

@@ -65,7 +65,7 @@ func handleRevokeHydraOAuthClient(apiHelper *harukiAPIHelper.HarukiToolboxRouter
 		}
 		if targetUser != nil && options.RevokeTokens {
 			adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientRevoke, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultFailure, adminCoreModule.AdminFailureMetadata(adminFailureReasonRevokeTokensFailed, map[string]any{"hydraMode": true, "targetUserID": targetUser.ID}))
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusNotImplemented, "targeted token revocation is unavailable while oauth2 is backed by hydra", nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusNotImplemented, "targeted token revocation is unavailable while oauth2 is backed by hydra", nil)
 		}
 		revokedAuthorizations := 0
 		if options.RevokeAuthorizations {
@@ -110,7 +110,7 @@ func handleRevokeHydraOAuthClient(apiHelper *harukiAPIHelper.HarukiToolboxRouter
 			metadata["targetUserID"] = targetUser.ID
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientRevoke, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, metadata)
-		return harukiAPIHelper.SuccessResponse(c, "oauth client authorizations revoked", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client authorizations revoked", &resp)
 	}
 }
 
@@ -137,6 +137,6 @@ func handleRestoreHydraOAuthClient(apiHelper *harukiAPIHelper.HarukiToolboxRoute
 		}
 		resp := adminOAuthClientRestoreResponse{ClientID: updatedClient.ClientID, Active: oauth2Module.HydraOAuthClientActive(updatedClient)}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientRestore, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"hydraMode": true})
-		return harukiAPIHelper.SuccessResponse(c, "oauth client restored", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client restored", &resp)
 	}
 }

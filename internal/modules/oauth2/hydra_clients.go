@@ -11,8 +11,9 @@ import (
 	"strings"
 	"time"
 
+	json "encoding/json/v2"
+
 	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
-	"github.com/bytedance/sonic"
 )
 
 const (
@@ -30,7 +31,7 @@ type HydraOAuthClient struct {
 	ResponseTypes           []string       `json:"response_types,omitempty"`
 	Scope                   string         `json:"scope,omitempty"`
 	Metadata                map[string]any `json:"metadata,omitempty"`
-	CreatedAt               *time.Time     `json:"created_at,omitempty"`
+	CreatedAt               *time.Time     `json:"created_at,omitzero"`
 }
 
 type HydraOAuthClientUpsertInput struct {
@@ -245,7 +246,7 @@ func listHydraOAuthClientsPage(ctx context.Context, hydraConfig *harukiOAuth2.Hy
 
 	var clients []HydraOAuthClient
 	if len(body) > 0 {
-		if err := sonic.Unmarshal(body, &clients); err != nil {
+		if err := json.Unmarshal(body, &clients); err != nil {
 			return nil, "", fmt.Errorf("failed to decode hydra oauth clients: %w", err)
 		}
 	}
@@ -258,7 +259,7 @@ func sendHydraClientRequest(ctx context.Context, hydraConfig *harukiOAuth2.Hydra
 		return nil, err
 	}
 	var client HydraOAuthClient
-	if err := sonic.Unmarshal(responseBody, &client); err != nil {
+	if err := json.Unmarshal(responseBody, &client); err != nil {
 		return nil, fmt.Errorf("failed to decode hydra oauth client response: %w", err)
 	}
 	return &client, nil
@@ -271,7 +272,7 @@ func sendHydraClientRequestRaw(ctx context.Context, hydraConfig *harukiOAuth2.Hy
 	}
 	var requestBody []byte
 	if payload != nil {
-		requestBody, err = sonic.Marshal(payload)
+		requestBody, err = json.Marshal(payload)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode hydra oauth client payload: %w", err)
 		}
@@ -305,7 +306,7 @@ func sendHydraClientRequestRaw(ctx context.Context, hydraConfig *harukiOAuth2.Hy
 func parseHydraRequestError(status int, body []byte) error {
 	message := http.StatusText(status)
 	var hydraErr hydraErrorResponse
-	if err := sonic.Unmarshal(body, &hydraErr); err == nil {
+	if err := json.Unmarshal(body, &hydraErr); err == nil {
 		for _, candidate := range []string{hydraErr.ErrorDescription, hydraErr.Message, hydraErr.Error} {
 			if strings.TrimSpace(candidate) != "" {
 				message = candidate

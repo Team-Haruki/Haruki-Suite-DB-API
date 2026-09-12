@@ -1,7 +1,7 @@
 package adminrisk
 
 import (
-	"encoding/json"
+	json "encoding/json/v2"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -82,7 +82,7 @@ func getRiskEventsResponse(t *testing.T, app *fiber.App, path string) (int, risk
 	var envelope struct {
 		UpdatedData riskEventQueryResponse `json:"updatedData"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&envelope); err != nil {
+	if err := json.UnmarshalRead(resp.Body, &envelope); err != nil {
 		t.Fatalf("decode GET %s response: %v", path, err)
 	}
 	return resp.StatusCode, envelope.UpdatedData

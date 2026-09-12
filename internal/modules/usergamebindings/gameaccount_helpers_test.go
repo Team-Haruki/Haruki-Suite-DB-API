@@ -3,6 +3,11 @@ package usergamebindings
 import (
 	"context"
 	"errors"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
 	harukiSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/ent/toolbox/schema"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database"
@@ -10,10 +15,6 @@ import (
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/gameaccountbinding"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/gameaccountdatagrant"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/smtp"
-	"strings"
-	"sync"
-	"testing"
-	"time"
 
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"

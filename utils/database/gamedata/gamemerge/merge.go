@@ -16,13 +16,15 @@
 // is skipped with no error and no log. If the caller hands in a decoding whose
 // element types differ from the expected ones, the stored history simply looks
 // empty and the next upload replaces it with the client's short list. Callers
-// must decode JSON numbers with UseNumber (json.Number is accepted below) rather
+// must decode JSON numbers with jsonvalue.Numbers (jsonvalue.Number is accepted below) rather
 // than through float64.
 package gamemerge
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
 	"strconv"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 )
 
 // Field names, as the game sends them.
@@ -99,13 +101,13 @@ func Events(n Normalizer, oldValue, newValue any) []any {
 			latest[id] = e
 		}
 	}
-	return collect(order, latest)
+	return records.collect(order, latest)
 }
 
 // shouldReplaceEvent: a higher eventPoint always wins; a lower one never does.
-// On a tie the record carrying `rank` wins, because rank only appears once an
-// event has ended and that record is the more complete one. If both or neither
-// carry rank, the incumbent stays — the merge is deliberately not "last write".
+// On a tie prefer a record carrying rank over one without it. Otherwise the
+// uploaded snapshot wins so rank and reward state can refresh without earning
+// more points. Lower-point snapshots still cannot roll progress back.
 func shouldReplaceEvent(newEvent, oldEvent map[string]any) bool {
 	newPoint := optionalInt(newEvent, fieldEventPoint)
 	oldPoint := optionalInt(oldEvent, fieldEventPoint)
@@ -117,7 +119,7 @@ func shouldReplaceEvent(newEvent, oldEvent map[string]any) bool {
 	}
 	_, newHasRank := newEvent[fieldEventRank]
 	_, oldHasRank := oldEvent[fieldEventRank]
-	return newHasRank && !oldHasRank
+	return newHasRank || !oldHasRank
 }
 
 type bloomKey struct{ EventID, CharID int64 }
@@ -152,7 +154,7 @@ func WorldBlooms(n Normalizer, oldValue, newValue any) []any {
 			latest[k] = b
 		}
 	}
-	return collect(order, latest)
+	return records.collect(order, latest)
 }
 
 type gachaKey struct{ GachaID, GachaBehaviorID int64 }
@@ -187,14 +189,19 @@ func Gachas(n Normalizer, oldValue, newValue any) []any {
 			latest[k] = g
 		}
 	}
-	return collect(order, latest)
+	return records.collect(order, latest)
 }
 
 // collect renders the winners in first-seen order. The MongoDB implementation
 // ranged over a map and so produced a different order on every call; keeping
 // insertion order here is strictly more deterministic and is not observable
 // through the API, whose array order for these keys was already arbitrary.
-func collect[K comparable](order []K, latest map[K]map[string]any) []any {
+// recordCollector owns the final ordered projection for all merge key types.
+type recordCollector struct{}
+
+var records recordCollector
+
+func (recordCollector) collect[K comparable](order []K, latest map[K]map[string]any) []any {
 	if len(latest) == 0 {
 		return nil
 	}
@@ -231,7 +238,7 @@ func Document(value any) (map[string]any, bool) {
 	switch typed := value.(type) {
 	case map[string]any:
 		return typed, true
-	case map[string]json.RawMessage:
+	case map[string]jsontext.Value:
 		out := make(map[string]any, len(typed))
 		for k, v := range typed {
 			out[k] = v
@@ -257,8 +264,8 @@ func requiredInt(m map[string]any, key string) (int64, bool) {
 
 // ToInt64 coerces the numeric encodings these documents arrive in.
 //
-// json.Number is handled explicitly because the JSON path MUST decode with
-// UseNumber: a game user id exceeds 2^53 and any float64 hop corrupts it.
+// jsonvalue.Number is handled explicitly because the JSON path MUST decode with
+// jsonvalue.Numbers: a game user id exceeds 2^53 and any float64 hop corrupts it.
 func ToInt64(v any) (int64, bool) {
 	switch n := v.(type) {
 	case int:
@@ -285,13 +292,13 @@ func ToInt64(v any) (int64, bool) {
 		return int64(n), true
 	case float64:
 		return int64(n), true
-	case json.Number:
+	case jsonvalue.Number:
 		parsed, err := n.Int64()
 		if err != nil {
 			return 0, false
 		}
 		return parsed, true
-	case json.RawMessage:
+	case jsontext.Value:
 		parsed, err := strconv.ParseInt(string(n), 10, 64)
 		if err != nil {
 			return 0, false

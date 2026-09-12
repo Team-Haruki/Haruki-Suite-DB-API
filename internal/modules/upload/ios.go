@@ -3,6 +3,11 @@ package upload
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiBackground "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/background"
@@ -12,10 +17,6 @@ import (
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/sekai"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -223,9 +224,9 @@ func handleIOSScriptUploadWithValidation(apiHelper *harukiAPIHelper.HarukiToolbo
 		case iosUploadChunkStateInconsistentTotal:
 			return harukiAPIHelper.ErrorBadRequest(c, "inconsistent X-Total-Chunks for this upload")
 		case iosUploadChunkStateTooLarge:
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusRequestEntityTooLarge, "upload is too large", nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusRequestEntityTooLarge, "upload is too large", nil)
 		case iosUploadChunkStateIncomplete, iosUploadChunkStateCompleteAlreadyClaimed:
-			return harukiAPIHelper.SuccessResponse[string](c, "Successfully uploaded data.", nil)
+			return harukiAPIHelper.Responses.SuccessResponse[string](c, "Successfully uploaded data.", nil)
 		}
 
 		completedChunks, err := loadIOSUploadChunks(ctx, redisClient, uploadKey, header.TotalChunks)
@@ -276,7 +277,7 @@ func handleIOSScriptUploadWithValidation(apiHelper *harukiAPIHelper.HarukiToolbo
 		if !accepted {
 			return harukiAPIHelper.ErrorInternal(c, "upload service is shutting down")
 		}
-		return harukiAPIHelper.SuccessResponse[string](c, "Successfully uploaded data.", nil)
+		return harukiAPIHelper.Responses.SuccessResponse[string](c, "Successfully uploaded data.", nil)
 	}
 }
 

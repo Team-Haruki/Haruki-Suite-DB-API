@@ -98,7 +98,7 @@ func handleListHydraOAuthClients(apiHelper *harukiAPIHelper.HarukiToolboxRouterH
 			"includeInactive": includeInactive,
 			"total":           total,
 		})
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -155,7 +155,7 @@ func handleCreateHydraOAuthClient(apiHelper *harukiAPIHelper.HarukiToolboxRouter
 			"scopeCount":  len(resp.Scopes),
 			"redirectCnt": len(resp.RedirectURIs),
 		})
-		return harukiAPIHelper.SuccessResponse(c, "oauth client created", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client created", &resp)
 	}
 }
 
@@ -187,7 +187,7 @@ func handleUpdateHydraOAuthClientActive(apiHelper *harukiAPIHelper.HarukiToolbox
 		}
 		resp := adminOAuthClientActiveResponse{ClientID: updatedClient.ClientID, Active: oauth2Module.HydraOAuthClientActive(updatedClient)}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientActiveUpdate, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"hydraMode": true, "active": active})
-		return harukiAPIHelper.SuccessResponse(c, "oauth client status updated", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client status updated", &resp)
 	}
 }
 
@@ -239,7 +239,7 @@ func handleUpdateHydraOAuthClient(apiHelper *harukiAPIHelper.HarukiToolboxRouter
 			CreatedAt:    hydraClientCreatedAt(updatedClient),
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientUpdate, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"hydraMode": true, "scopeCount": len(resp.Scopes), "redirectCnt": len(resp.RedirectURIs)})
-		return harukiAPIHelper.SuccessResponse(c, "oauth client updated", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client updated", &resp)
 	}
 }
 
@@ -270,7 +270,7 @@ func handleRotateHydraOAuthClientSecret(apiHelper *harukiAPIHelper.HarukiToolbox
 		}
 		resp := adminOAuthClientRotateSecretResponse{ClientID: clientID, ClientSecret: plainSecret}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientRotateSecret, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"hydraMode": true})
-		return harukiAPIHelper.SuccessResponse(c, "oauth client secret rotated", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client secret rotated", &resp)
 	}
 }
 
@@ -332,6 +332,6 @@ func handleDeleteHydraOAuthClient(apiHelper *harukiAPIHelper.HarukiToolboxRouter
 			RevokedTokens:         deletedTokens,
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientDelete, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"hydraMode": true, "deleteAuthorizations": options.DeleteAuthorizations, "deleteTokens": options.DeleteTokens, "deletedAuthorizations": deletedAuthorizations, "deletedTokens": deletedTokens})
-		return harukiAPIHelper.SuccessResponse(c, "oauth client deleted", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client deleted", &resp)
 	}
 }

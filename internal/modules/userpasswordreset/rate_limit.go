@@ -82,7 +82,7 @@ func respondResetPasswordRateLimitedWithWindow(
 		}
 	}
 	c.Set("Retry-After", fmt.Sprintf("%d", retryAfter))
-	return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusTooManyRequests, fmt.Sprintf("%s (retry after %ds)", message, retryAfter), nil)
+	return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusTooManyRequests, fmt.Sprintf("%s (retry after %ds)", message, retryAfter), nil)
 }
 
 func checkResetPasswordSendRateLimit(c fiber.Ctx, apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, clientIP, email string) (limited bool, key string, message string, err error) {

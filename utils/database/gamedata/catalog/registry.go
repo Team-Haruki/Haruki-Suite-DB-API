@@ -3,7 +3,7 @@ package catalog
 import (
 	"bytes"
 	_ "embed"
-	"encoding/json"
+	json "encoding/json/v2"
 	"fmt"
 )
 
@@ -38,9 +38,8 @@ func init() {
 
 func parse(b []byte) (*Catalog, error) {
 	var c Catalog
-	dec := json.NewDecoder(bytes.NewReader(b))
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&c); err != nil {
+
+	if err := json.UnmarshalRead(bytes.NewReader(b), &c, json.RejectUnknownMembers(true)); err != nil {
 		return nil, fmt.Errorf("decode: %w", err)
 	}
 	if err := c.build(); err != nil {

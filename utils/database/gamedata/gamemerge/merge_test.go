@@ -1,9 +1,11 @@
 package gamemerge
 
 import (
-	"encoding/json"
+	json "encoding/json/v2"
 	"strings"
 	"testing"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 )
 
 var jn = JSONNormalizer{}
@@ -71,14 +73,13 @@ func TestEventsTieGoesToTheRecordWithRank(t *testing.T) {
 	}
 }
 
-// Neither or both carrying rank: the incumbent stays. This is deliberately NOT
-// last-write-wins.
-func TestEventsTieWithNoRankKeepsIncumbent(t *testing.T) {
+// Equal points must still refresh fields carried by the new snapshot.
+func TestEventsTieWithNoRankRefreshesSnapshot(t *testing.T) {
 	old := []any{doc("eventId", 1, "eventPoint", 100, "marker", "old")}
 	upl := []any{doc("eventId", 1, "eventPoint", 100, "marker", "new")}
 	got := Events(jn, old, upl)
-	if got[0].(map[string]any)["marker"] != "old" {
-		t.Fatalf("tie replaced the incumbent: %v", got[0])
+	if got[0].(map[string]any)["marker"] != "new" {
+		t.Fatalf("tie kept the stale incumbent: %v", got[0])
 	}
 }
 
@@ -128,18 +129,17 @@ func TestRecordsWithoutAnIdentityAreSkipped(t *testing.T) {
 	}
 }
 
-// The JSON path MUST decode with UseNumber. json.Number has to be accepted, and
+// The JSON path MUST decode with jsonvalue.Numbers. jsonvalue.Number has to be accepted, and
 // a value past 2^53 has to survive.
 func TestJSONNumberIdentitiesSurvive(t *testing.T) {
 	var decoded []any
-	dec := json.NewDecoder(strings.NewReader(`[{"eventId":28808221489823746,"eventPoint":5}]`))
-	dec.UseNumber()
-	if err := dec.Decode(&decoded); err != nil {
+
+	if err := json.UnmarshalRead(strings.NewReader(`[{"eventId":28808221489823746,"eventPoint":5}]`), &decoded, jsonvalue.Numbers); err != nil {
 		t.Fatal(err)
 	}
 	got := Events(jn, decoded, nil)
 	if len(got) != 1 {
-		t.Fatalf("len = %d; a json.Number identity was rejected", len(got))
+		t.Fatalf("len = %d; a jsonvalue.Number identity was rejected", len(got))
 	}
 	id, ok := ToInt64(got[0].(map[string]any)["eventId"])
 	if !ok || id != 28808221489823746 {
@@ -147,7 +147,7 @@ func TestJSONNumberIdentitiesSurvive(t *testing.T) {
 	}
 }
 
-// float64 cannot represent 28808221489823746. Decoding without UseNumber is the
+// float64 cannot represent 28808221489823746. Decoding without jsonvalue.Numbers is the
 // mistake this asserts against, so the failure is visible rather than silent.
 func TestFloat64DecodingCorruptsLargeIdentities(t *testing.T) {
 	var decoded []any
@@ -158,7 +158,7 @@ func TestFloat64DecodingCorruptsLargeIdentities(t *testing.T) {
 	if id == 28808221489823746 {
 		t.Skip("float64 happened to round-trip this value; the hazard is unchanged")
 	}
-	t.Logf("float64 decoding turned 28808221489823746 into %d — callers must use UseNumber", id)
+	t.Logf("float64 decoding turned 28808221489823746 into %d — callers must use jsonvalue.Numbers", id)
 }
 
 func TestIsMergedKey(t *testing.T) {
@@ -169,5 +169,14 @@ func TestIsMergedKey(t *testing.T) {
 	}
 	if IsMergedKey("userCards") {
 		t.Fatal("userCards reported as merged")
+	}
+}
+
+func TestEventsTieRefreshesRankAndReward(t *testing.T) {
+	old := []any{doc("eventId", 1, "eventPoint", 100, "rank", 7, "rankingRewardReceivedAt", 0)}
+	uploaded := []any{doc("eventId", 1, "eventPoint", 100, "rank", 9, "rankingRewardReceivedAt", 1758686145)}
+	got := Events(jn, old, uploaded)[0].(map[string]any)
+	if got["rank"] != 9 || got["rankingRewardReceivedAt"] != 1758686145 {
+		t.Fatalf("equal-point snapshot did not refresh: %v", got)
 	}
 }

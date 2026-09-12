@@ -5,13 +5,14 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
+	"strconv"
+	"strings"
+
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/neopg"
 	botUser "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/neopg/user"
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
-	"strconv"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/crypto/bcrypt"
@@ -171,7 +172,7 @@ func handleRegister(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) fiber
 			BotID:      botIDStr,
 			Credential: credentialJWT,
 		}
-		return harukiAPIHelper.UpdatedDataResponse(c, statusCode, message, &result)
+		return harukiAPIHelper.Responses.UpdatedDataResponse(c, statusCode, message, &result)
 	}
 }
 

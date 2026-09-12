@@ -2,10 +2,11 @@ package sekai
 
 import (
 	"errors"
-	harukiConfig "github.com/Team-Haruki/Haruki-Toolbox-Backend/config"
-	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	"strings"
 	"testing"
+
+	harukiConfig "github.com/Team-Haruki/Haruki-Toolbox-Backend/config"
+	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 )
 
 func TestFilterHeaders(t *testing.T) {

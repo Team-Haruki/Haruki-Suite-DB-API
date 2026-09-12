@@ -1,7 +1,8 @@
 package runtimeconfig
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	json "encoding/json/v2"
 	"sync"
 	"testing"
 
@@ -84,7 +85,7 @@ func TestRedisStorePreservesSnapshotJSONContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read persisted snapshot: %v", err)
 	}
-	var fields map[string]json.RawMessage
+	var fields map[string]jsontext.Value
 	if err := json.Unmarshal([]byte(raw), &fields); err != nil {
 		t.Fatalf("decode persisted snapshot: %v", err)
 	}

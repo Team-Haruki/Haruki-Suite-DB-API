@@ -3,9 +3,10 @@ package sekai
 import (
 	"bytes"
 	"errors"
-	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	"strings"
 	"testing"
+
+	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 )
 
 const (

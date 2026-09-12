@@ -252,6 +252,8 @@ services:
       HYDRA_ADMIN_URL: http://hydra:4445
       BACKEND_HOST: 0.0.0.0
       BACKEND_PORT: "16666"
+      BACKEND_PROFILING_ENABLED: ${BACKEND_PROFILING_ENABLED:-false}
+      BACKEND_PROFILING_INTERVAL_SECONDS: ${BACKEND_PROFILING_INTERVAL_SECONDS:-30}
       BACKEND_AUTO_MIGRATE: "${BACKEND_AUTO_MIGRATE:-true}"
       # Keep forwarded-IP trust disabled unless this deployment assigns its edge
       # proxy a stable address and sets BACKEND_TRUSTED_PROXIES to that exact IP.

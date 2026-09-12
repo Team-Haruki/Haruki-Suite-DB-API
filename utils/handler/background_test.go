@@ -58,6 +58,7 @@ func TestRunUploadFanoutSubmitsOneTrackedParentTask(t *testing.T) {
 	if len(runner.tasks) != 1 {
 		t.Fatalf("captured task count = %d, want 1", len(runner.tasks))
 	}
+	t.Cleanup(runner.tasks[0]) // Complete the admitted parent and release its capacity.
 }
 
 func TestRunUploadFanoutLogsRejectedTrackedTask(t *testing.T) {

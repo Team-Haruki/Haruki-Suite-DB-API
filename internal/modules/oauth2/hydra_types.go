@@ -42,7 +42,7 @@ type hydraLogoutRequestResponse struct {
 	SessionID   string                   `json:"sid"`
 	RequestURL  string                   `json:"request_url"`
 	RPInitiated bool                     `json:"rp_initiated"`
-	Client      *hydraOAuthClientDetails `json:"client,omitempty"`
+	Client      *hydraOAuthClientDetails `json:"client,omitzero"`
 }
 
 // hydraLogoutPayload carries the challenge for accept and reject alike; neither

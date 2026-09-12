@@ -1,13 +1,14 @@
 package adminsyslog
 
 import (
+	"strconv"
+	"strings"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	platformPagination "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/pagination"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/systemlog"
-	"strconv"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -67,7 +68,7 @@ func handleQuerySystemLogs(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers
 			Items: adminCoreModule.BuildSystemLogItems(rows),
 		}
 
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -167,7 +168,7 @@ func handleGetSystemLogSummary(apiHelper *harukiAPIHelper.HarukiToolboxRouterHel
 			ByResult:    normalizeCategoryCounts(byResultCounts),
 			ByReason:    buildSystemLogFailureReasonCounts(failureReasonRows),
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -209,7 +210,7 @@ func handleGetSystemLogDetail(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelp
 		if len(items) == 0 {
 			return harukiAPIHelper.ErrorNotFound(c, "system log not found")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success", &items[0])
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &items[0])
 	}
 }
 
@@ -281,6 +282,6 @@ func handleExportSystemLogs(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelper
 			},
 			Items: items,
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }

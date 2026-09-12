@@ -36,7 +36,7 @@ func handleAdminListSponsors(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpe
 			Items:       items,
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminSponsorActionList, adminSponsorTargetType, "all", harukiAPIHelper.SystemLogResultSuccess, map[string]any{"total": resp.Total})
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -138,7 +138,7 @@ func handleAdminUpdateSponsor(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelp
 
 		resp := adminSponsorMutationResponse{Sponsor: buildAdminSponsorItem(updated)}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminSponsorActionUpdate, adminSponsorTargetType, sponsorID, harukiAPIHelper.SystemLogResultSuccess, nil)
-		return harukiAPIHelper.SuccessResponse(c, "sponsor updated", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "sponsor updated", &resp)
 	}
 }
 
@@ -153,6 +153,6 @@ func handleAdminSyncAfdianSponsors(apiHelper *harukiAPIHelper.HarukiToolboxRoute
 			"imported": result.Imported,
 			"skipped":  result.Skipped,
 		})
-		return harukiAPIHelper.SuccessResponse(c, "afdian sponsors synced", &result)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "afdian sponsors synced", &result)
 	}
 }

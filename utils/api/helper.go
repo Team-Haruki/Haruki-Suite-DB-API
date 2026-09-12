@@ -3,11 +3,12 @@ package api
 import (
 	"context"
 
+	"sync"
+
 	platformRuntimeConfig "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/runtimeconfig"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/sekaiapi"
 	smtp2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/smtp"
-	"sync"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"

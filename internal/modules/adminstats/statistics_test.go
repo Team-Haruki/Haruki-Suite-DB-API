@@ -1,10 +1,11 @@
 package adminstats
 
 import (
-	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 )
 
 func TestParseStatisticsWindowHours(t *testing.T) {

@@ -2,6 +2,7 @@ package usersocial
 
 import (
 	"crypto/subtle"
+
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
@@ -107,7 +108,7 @@ func handleVerifySocialPlatform(apiHelper *harukiAPIHelper.HarukiToolboxRouterHe
 		}
 		if exists {
 			reason = "social_platform_conflict"
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusConflict, "this social platform account is already bound", nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusConflict, "this social platform account is already bound", nil)
 		}
 
 		tx, err := apiHelper.DBManager.DB.Tx(ctx)
@@ -127,7 +128,7 @@ func handleVerifySocialPlatform(apiHelper *harukiAPIHelper.HarukiToolboxRouterHe
 			_ = tx.Rollback()
 			if postgresql.IsConstraintError(err) {
 				reason = "social_platform_conflict"
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusConflict, "this social platform account is already bound", nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusConflict, "this social platform account is already bound", nil)
 			}
 			harukiLogger.Errorf("Failed to create social platform info: %v", err)
 			reason = "create_social_platform_failed"
@@ -157,6 +158,6 @@ func handleVerifySocialPlatform(apiHelper *harukiAPIHelper.HarukiToolboxRouterHe
 		clearSocialPlatformVerifyAttempt(c, apiHelper, req.Platform, req.UserID)
 		result = harukiAPIHelper.SystemLogResultSuccess
 		reason = "ok"
-		return harukiAPIHelper.SuccessResponse[string](c, "social platform verified", nil)
+		return harukiAPIHelper.Responses.SuccessResponse[string](c, "social platform verified", nil)
 	}
 }

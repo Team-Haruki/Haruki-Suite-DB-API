@@ -2,14 +2,15 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
-	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
-	dbManager "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
-	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"io"
 	"net"
 	"strings"
 	"testing"
+
+	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
+	dbManager "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
+	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 )
 
 func testLogger() *harukiLogger.Logger {
@@ -28,7 +29,7 @@ func TestConvertToStatusCode(t *testing.T) {
 		{name: "float64", in: float64(404), want: 404},
 		{name: "int64", in: int64(500), want: 500},
 		{name: "uint32", in: uint32(201), want: 201},
-		{name: "json number", in: json.Number("503"), want: 503},
+		{name: "json number", in: jsonvalue.Number("503"), want: 503},
 		{name: "unknown type", in: "not-status", want: 0},
 	}
 
@@ -54,7 +55,7 @@ func TestConvertToInt64Pointer(t *testing.T) {
 		want    int64
 		wantErr string
 	}{
-		{name: "json number", in: json.Number("123"), want: 123},
+		{name: "json number", in: jsonvalue.Number("123"), want: 123},
 		{name: "string", in: "456", want: 456},
 		{name: "float64", in: float64(789), want: 789},
 		{name: "int64", in: int64(321), want: 321},

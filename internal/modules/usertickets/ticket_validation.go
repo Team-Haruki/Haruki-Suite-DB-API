@@ -50,7 +50,7 @@ func normalizeUserTicketMessage(raw string) (string, error) {
 
 func respondUserTicketBadRequest(c fiber.Ctx, err error, fallback string) error {
 	if fiberErr, ok := err.(*fiber.Error); ok {
-		return harukiAPIHelper.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
+		return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
 	}
 	return harukiAPIHelper.ErrorBadRequest(c, fallback)
 }

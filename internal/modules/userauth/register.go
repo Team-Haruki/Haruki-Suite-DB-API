@@ -2,13 +2,14 @@ package userauth
 
 import (
 	"crypto/subtle"
+	"strings"
+	"time"
+
 	userModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/user"
 	platformIdentity "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/identity"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiCloudflare "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/cloudflare"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
-	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -101,7 +102,7 @@ func handleRegister(
 			return handleRegisterViaKratos(c, apiHelper, req, logRegister, userDataBuilder)
 		}
 		logRegister(harukiAPIHelper.SystemLogResultFailure, "", "managed_identity_required")
-		return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusGone, ManagedIdentityMessage, nil)
+		return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusGone, ManagedIdentityMessage, nil)
 	}
 }
 
@@ -233,5 +234,5 @@ func handleRegisterViaKratos(
 	}
 	logRegister(harukiAPIHelper.SystemLogResultSuccess, userID, registerReasonOK)
 	resp := harukiAPIHelper.RegisterOrLoginSuccessResponse{Status: fiber.StatusOK, Message: "register success", UserData: ud}
-	return harukiAPIHelper.ResponseWithStruct(c, fiber.StatusOK, &resp)
+	return harukiAPIHelper.Responses.ResponseWithStruct(c, fiber.StatusOK, &resp)
 }

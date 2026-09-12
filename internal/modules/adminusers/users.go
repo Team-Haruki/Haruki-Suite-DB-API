@@ -1,13 +1,14 @@
 package adminusers
 
 import (
+	"strings"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	platformPagination "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/pagination"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
 	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -76,7 +77,7 @@ func handleListUsers(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) fibe
 			Items: buildAdminUserListItems(rows),
 		}
 
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -198,7 +199,7 @@ func handleBanUser(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, hydraC
 			resultState = harukiAPIHelper.SystemLogResultFailure
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionUserBan, adminAuditTargetTypeUser, updatedUser.ID, resultState, metadata)
-		return harukiAPIHelper.SuccessResponse(c, message, &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, message, &resp)
 	}
 }
 
@@ -276,6 +277,6 @@ func handleUnbanUser(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) fibe
 			Banned: updatedUser.Banned,
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionUserUnban, adminAuditTargetTypeUser, updatedUser.ID, harukiAPIHelper.SystemLogResultSuccess, nil)
-		return harukiAPIHelper.SuccessResponse(c, "user unbanned", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "user unbanned", &resp)
 	}
 }

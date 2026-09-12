@@ -1,13 +1,14 @@
 package adminoauth
 
 import (
+	"strings"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	oauth2Module "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/oauth2"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/oauth2clientwebhookendpoint"
 	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
-	"strings"
 
 	sql "entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
@@ -50,7 +51,7 @@ func handleListHydraOAuthClientWebhooks(apiHelper *harukiAPIHelper.HarukiToolbox
 			Items:       items,
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientWebhookList, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"total": resp.Total})
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -104,7 +105,7 @@ func handleCreateHydraOAuthClientWebhook(apiHelper *harukiAPIHelper.HarukiToolbo
 		if err != nil {
 			if postgresql.IsConstraintError(err) {
 				adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientWebhookCreate, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultFailure, adminCoreModule.AdminFailureMetadata(adminFailureReasonWebhookConflict, nil))
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusConflict, "oauth client webhook conflict", nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusConflict, "oauth client webhook conflict", nil)
 			}
 			adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientWebhookCreate, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultFailure, adminCoreModule.AdminFailureMetadata(adminFailureReasonCreateWebhookFailed, nil))
 			return harukiAPIHelper.ErrorInternal(c, "failed to create oauth client webhook")
@@ -112,7 +113,7 @@ func handleCreateHydraOAuthClientWebhook(apiHelper *harukiAPIHelper.HarukiToolbo
 
 		resp := buildAdminOAuthClientWebhookMutationResponse(created)
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientWebhookCreate, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"webhookID": created.ID, "enabled": created.Enabled, "bearerSet": resp.Webhook.BearerSet})
-		return harukiAPIHelper.SuccessResponse(c, "oauth client webhook created", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client webhook created", &resp)
 	}
 }
 
@@ -172,14 +173,14 @@ func handleUpdateHydraOAuthClientWebhook(apiHelper *harukiAPIHelper.HarukiToolbo
 		if !changed {
 			resp := buildAdminOAuthClientWebhookMutationResponse(current)
 			adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientWebhookUpdate, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"webhookID": webhookID, "noChange": true})
-			return harukiAPIHelper.SuccessResponse(c, "oauth client webhook updated", &resp)
+			return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client webhook updated", &resp)
 		}
 
 		updated, err := update.Save(c.Context())
 		if err != nil {
 			if postgresql.IsConstraintError(err) {
 				adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientWebhookUpdate, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultFailure, adminCoreModule.AdminFailureMetadata(adminFailureReasonWebhookConflict, nil))
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusConflict, "oauth client webhook conflict", nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusConflict, "oauth client webhook conflict", nil)
 			}
 			adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientWebhookUpdate, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultFailure, adminCoreModule.AdminFailureMetadata(adminFailureReasonUpdateWebhookFailed, nil))
 			return harukiAPIHelper.ErrorInternal(c, "failed to update oauth client webhook")
@@ -187,7 +188,7 @@ func handleUpdateHydraOAuthClientWebhook(apiHelper *harukiAPIHelper.HarukiToolbo
 
 		resp := buildAdminOAuthClientWebhookMutationResponse(updated)
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientWebhookUpdate, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"webhookID": webhookID, "enabled": updated.Enabled, "bearerSet": resp.Webhook.BearerSet})
-		return harukiAPIHelper.SuccessResponse(c, "oauth client webhook updated", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth client webhook updated", &resp)
 	}
 }
 
@@ -213,6 +214,6 @@ func handleDeleteHydraOAuthClientWebhook(apiHelper *harukiAPIHelper.HarukiToolbo
 		}
 
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientWebhookDelete, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"webhookID": webhookID})
-		return harukiAPIHelper.SuccessResponse[string](c, "oauth client webhook deleted", nil)
+		return harukiAPIHelper.Responses.SuccessResponse[string](c, "oauth client webhook deleted", nil)
 	}
 }

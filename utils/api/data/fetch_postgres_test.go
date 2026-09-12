@@ -1,7 +1,7 @@
 package data
 
 import (
-	"encoding/json"
+	json "encoding/json/v2"
 	"testing"
 
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"

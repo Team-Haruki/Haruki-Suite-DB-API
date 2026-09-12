@@ -1,11 +1,12 @@
 package userinfo
 
 import (
+	"strings"
+
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -57,7 +58,7 @@ func handleGetMe(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, userData
 		if err != nil {
 			return err
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success get current user", ud)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success get current user", ud)
 	}
 }
 
@@ -67,6 +68,6 @@ func handleGetSettings(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, us
 		if err != nil {
 			return err
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success get latest settings", ud)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success get latest settings", ud)
 	}
 }

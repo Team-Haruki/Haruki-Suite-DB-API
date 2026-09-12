@@ -2,12 +2,13 @@ package misc
 
 import (
 	"context"
-	"encoding/json"
-	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
+	json "encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
+
+	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 
 	harukiHandler "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/handler"
 
@@ -29,7 +30,7 @@ func TestHealthHandler(t *testing.T) {
 	}
 
 	var payload map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+	if err := json.UnmarshalRead(resp.Body, &payload); err != nil {
 		t.Fatalf("Decode returned error: %v", err)
 	}
 	status, ok := payload["status"].(string)
@@ -76,7 +77,7 @@ func TestHealthHandlerUsesDefensiveSuiteRestoreStatus(t *testing.T) {
 	}
 
 	var payload map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+	if err := json.UnmarshalRead(resp.Body, &payload); err != nil {
 		t.Fatalf("Decode returned error: %v", err)
 	}
 	if payload["status"] != "degraded" {

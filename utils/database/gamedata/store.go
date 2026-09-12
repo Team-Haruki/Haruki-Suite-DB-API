@@ -2,9 +2,11 @@ package gamedata
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	json "encoding/json/v2"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
@@ -34,9 +36,9 @@ func (s *Store) Catalog() *catalog.Catalog { return s.cat }
 
 // Row is one game-data row held as RAW COLUMN BYTES.
 //
-// Values are never decoded on the way out. Decoding here and re-encoding in the
-// handler would rebuild the BSON -> Go -> JSON round trip this store exists to
-// remove, which is where the measured 14.5-47x read cost lived.
+// Ordinary values pass through unchanged; compact values are expanded lazily.
+// A Row belongs to one request and must not be mutated or used concurrently.
+// Derived bytes are reused between the presence check and response rendering.
 type Row struct {
 	UserID     int64
 	Server     string
@@ -50,8 +52,17 @@ type Row struct {
 	// extra is the raw `extra` column, or nil.
 	extra []byte
 	// extraMembers is parsed lazily from extra on first use.
-	extraMembers map[string]json.RawMessage
+	extraMembers map[string]jsontext.Value
 	extraParsed  bool
+	// expanded is keyed by canonical column, so compact aliases share work.
+	expanded map[string]rowValue
+	parent   *rowValue
+}
+
+type rowValue struct {
+	raw []byte
+	ok  bool
+	err error
 }
 
 // Fetch reads one row. keys selects which data columns to read; nil or empty
@@ -182,11 +193,18 @@ func (s *Store) selectFor(keys []string) (quoted []string, plain []string) {
 		quoted = append(quoted, catalog.QuoteIdent(catalog.ExtraColumn))
 		plain = append(plain, catalog.ExtraColumn)
 	}
+	// Request order controls response order, but must not create different
+	// prepared statements for the same set of selected columns.
+	slices.Sort(plain)
+	for i, col := range plain {
+		quoted[i] = catalog.QuoteIdent(col)
+	}
 	return quoted, plain
 }
 
 // RawValue returns the raw JSON bytes for a requested key, expanding a compact
 // value on the way out. ok=false means the key has no value in this row.
+// The returned bytes belong to the Row and must not be modified.
 func (r *Row) RawValue(key string) (raw []byte, ok bool, err error) {
 	if r == nil {
 		return nil, false, nil
@@ -196,28 +214,46 @@ func (r *Row) RawValue(key string) (raw []byte, ok bool, err error) {
 	case catalog.PlaceMetadata:
 		return r.metadataValue(key)
 	case catalog.PlaceColumn:
-		v, present := r.byColumn[e.Column]
-		if !present {
-			return nil, false, nil
-		}
-		if e.Storage == catalog.StorageCompactJSON {
-			expanded, expErr := ExpandCompactJSON(v)
-			if expErr != nil {
-				return nil, false, expErr
-			}
-			return expanded, true, nil
-		}
-		return v, true, nil
+		return r.columnValue(e)
 	case catalog.PlaceFlattenParent:
 		// The flattened parent owns no column of its own; it is rebuilt from its
 		// children. Falling through to `extra` here would answer 404 for the
 		// single largest key in a mysekai document — updatedResources is 97.9%
 		// of one, and `?key=updatedResources` is the main mysekai query.
-		return r.flattenParent()
+		if r.parent == nil {
+			raw, ok, err := r.flattenParent()
+			r.parent = &rowValue{raw: raw, ok: ok, err: err}
+		}
+		return r.parent.raw, r.parent.ok, r.parent.err
 	default:
 		v, present := r.extraMember(key)
 		return v, present, nil
 	}
+}
+
+func (r *Row) columnValue(e *catalog.Entry) ([]byte, bool, error) {
+	v, present := r.byColumn[e.Column]
+	if !present {
+		return nil, false, nil
+	}
+	if e.Storage != catalog.StorageCompactJSON {
+		return v, true, nil
+	}
+	if cached, ok := r.expanded[e.Column]; ok {
+		return cached.raw, cached.ok, cached.err
+	}
+	if !IsCompactValue(v) {
+		return v, true, nil
+	}
+	raw, err := ExpandCompactJSON(v)
+	if err != nil {
+		raw = nil
+	}
+	if r.expanded == nil {
+		r.expanded = make(map[string]rowValue)
+	}
+	r.expanded[e.Column] = rowValue{raw: raw, ok: err == nil, err: err}
+	return raw, err == nil, err
 }
 
 // flattenParent rebuilds the flattened sub-document from its per-child columns,
@@ -229,24 +265,19 @@ func (r *Row) flattenParent() ([]byte, bool, error) {
 	any := false
 
 	for _, child := range r.cat.FlattenChildren() {
-		raw, present := r.byColumn[child.Column]
+		v, present, err := r.columnValue(child)
+		if err != nil {
+			return nil, false, err
+		}
 		if !present {
 			continue
-		}
-		v := raw
-		if child.Storage == catalog.StorageCompactJSON {
-			expanded, err := ExpandCompactJSON(raw)
-			if err != nil {
-				return nil, false, err
-			}
-			v = expanded
 		}
 		out = appendMember(out, &first, child.Child, v)
 		any = true
 	}
 
 	if parked, ok := r.extraMember(r.cat.FlattenKey); ok {
-		var m map[string]json.RawMessage
+		var m map[string]jsontext.Value
 		if err := json.Unmarshal(parked, &m); err == nil {
 			for k, v := range m {
 				out = appendMember(out, &first, k, v)
@@ -281,7 +312,7 @@ func (r *Row) extraMember(key string) ([]byte, bool) {
 	if !r.extraParsed {
 		r.extraParsed = true
 		if len(r.extra) > 0 {
-			var m map[string]json.RawMessage
+			var m map[string]jsontext.Value
 			if err := json.Unmarshal(r.extra, &m); err == nil {
 				r.extraMembers = m
 			}

@@ -3,10 +3,11 @@ package upload
 import (
 	"errors"
 	"fmt"
+	"strconv"
+
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiSekai "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/sekai"
-	"strconv"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -34,7 +35,7 @@ func handleInheritSubmit(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, 
 		allowed, retryAfter, breakerToken := inheritBreaker.Allow(server)
 		if !allowed {
 			c.Set("Retry-After", strconv.Itoa(retryAfterSeconds(retryAfter)))
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusServiceUnavailable, "game server temporarily degraded, please retry later", nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusServiceUnavailable, "game server temporarily degraded, please retry later", nil)
 		}
 		// Bound concurrent inherits per server; overflow fast-fails rather than
 		// piling up slow goroutines against one game server. Release the breaker probe
@@ -43,7 +44,7 @@ func handleInheritSubmit(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, 
 		if !inheritLimiter.acquire(server) {
 			inheritBreaker.ReleaseProbe(server, breakerToken)
 			c.Set("Retry-After", strconv.Itoa(retryAfterSeconds(inheritBreakerRetryAfterFloor)))
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusTooManyRequests, "too many concurrent inherit requests, please retry later", nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusTooManyRequests, "too many concurrent inherit requests, please retry later", nil)
 		}
 		defer inheritLimiter.release(server)
 		// Guarantee the breaker epoch is resolved even if retriever.Run panics (which
@@ -72,7 +73,7 @@ func handleInheritSubmit(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, 
 		if err := uploadSuiteData(c, apiHelper, dependencies, result, uploadServer); err != nil {
 			return err
 		}
-		return harukiAPIHelper.SuccessResponse[string](c, fmt.Sprintf("%s server user %d successfully uploaded data.", serverStr, result.UserID), nil)
+		return harukiAPIHelper.Responses.SuccessResponse[string](c, fmt.Sprintf("%s server user %d successfully uploaded data.", serverStr, result.UserID), nil)
 	}
 }
 
@@ -130,7 +131,7 @@ func uploadMysekaiDataIfNeeded(c fiber.Ctx, apiHelper *harukiAPIHelper.HarukiToo
 	)
 	if err != nil {
 		if mapped := mapUploadProcessingError(err); mapped != nil {
-			return harukiAPIHelper.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
 		}
 		return harukiAPIHelper.ErrorBadRequest(c, "failed to process mysekai upload")
 	}
@@ -155,7 +156,7 @@ func uploadSuiteData(c fiber.Ctx, apiHelper *harukiAPIHelper.HarukiToolboxRouter
 	)
 	if err != nil {
 		if mapped := mapUploadProcessingError(err); mapped != nil {
-			return harukiAPIHelper.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
 		}
 		return harukiAPIHelper.ErrorBadRequest(c, "failed to process suite upload")
 	}

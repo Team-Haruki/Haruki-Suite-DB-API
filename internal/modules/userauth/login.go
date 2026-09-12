@@ -1,13 +1,14 @@
 package userauth
 
 import (
+	"strings"
+
 	platformIdentity "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/identity"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiCloudflare "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/cloudflare"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -71,7 +72,7 @@ func handleLogin(
 		if apiHelper == nil || apiHelper.SessionHandler == nil || !apiHelper.SessionHandler.UsesKratosProvider() {
 			rollbackLoginRateLimitReservation(c, apiHelper, payload.Email)
 			logLogin(harukiAPIHelper.SystemLogResultFailure, "", "", "managed_identity_required")
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusGone, ManagedIdentityMessage, nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusGone, ManagedIdentityMessage, nil)
 		}
 		return handleLoginViaKratos(c, apiHelper, payload, logLogin, userDataBuilder)
 	}
@@ -188,5 +189,5 @@ func handleLoginViaKratos(
 	logLogin(harukiAPIHelper.SystemLogResultSuccess, user.ID, string(user.Role), "ok")
 	ud := userDataBuilder.BuildFromDBUser(user, &sessionToken)
 	resp := harukiAPIHelper.RegisterOrLoginSuccessResponse{Status: fiber.StatusOK, Message: "login success", UserData: ud}
-	return harukiAPIHelper.ResponseWithStruct(c, fiber.StatusOK, &resp)
+	return harukiAPIHelper.Responses.ResponseWithStruct(c, fiber.StatusOK, &resp)
 }

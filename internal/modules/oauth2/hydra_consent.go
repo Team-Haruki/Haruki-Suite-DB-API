@@ -3,14 +3,15 @@ package oauth2
 import (
 	"context"
 	"fmt"
-	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/bytedance/sonic"
+	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
+
+	json "encoding/json/v2"
 )
 
 type HydraConsentClient struct {
@@ -128,7 +129,7 @@ func listHydraConsentSessionsPage(ctx context.Context, hydraConfig *harukiOAuth2
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		message := http.StatusText(resp.StatusCode)
 		var hydraErr hydraErrorResponse
-		if err := sonic.Unmarshal(body, &hydraErr); err == nil {
+		if err := json.Unmarshal(body, &hydraErr); err == nil {
 			for _, candidate := range []string{hydraErr.ErrorDescription, hydraErr.Message, hydraErr.Error} {
 				if strings.TrimSpace(candidate) != "" {
 					message = candidate
@@ -141,7 +142,7 @@ func listHydraConsentSessionsPage(ctx context.Context, hydraConfig *harukiOAuth2
 
 	var sessions []HydraConsentSession
 	if len(body) > 0 {
-		if err := sonic.Unmarshal(body, &sessions); err != nil {
+		if err := json.Unmarshal(body, &sessions); err != nil {
 			return nil, "", fmt.Errorf("failed to decode hydra consent sessions: %w", err)
 		}
 	}

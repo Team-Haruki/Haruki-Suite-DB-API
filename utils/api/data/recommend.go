@@ -3,9 +3,11 @@ package data
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	json "encoding/json/v2"
+
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -80,9 +82,8 @@ func loadDeckRecommendData(ctx context.Context, apiHelper *harukiAPIHelper.Haruk
 		return nil, err
 	}
 	var result map[string]any
-	decoder := json.NewDecoder(bytes.NewReader(body))
-	decoder.UseNumber()
-	if err := decoder.Decode(&result); err != nil {
+
+	if err := json.UnmarshalRead(bytes.NewReader(body), &result, jsonvalue.Numbers); err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "failed to decode game data")
 	}
 	return result, nil

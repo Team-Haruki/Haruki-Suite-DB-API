@@ -7,6 +7,7 @@ import (
 
 func newUploadDataHandler(helper *harukiAPIHelper.HarukiToolboxRouterHelpers, dependencies Dependencies) *harukiDataHandler.DataHandler {
 	return &harukiDataHandler.DataHandler{
+		DataSync:                dependencies.DataSync,
 		BackgroundTasks:         dependencies.BackgroundTasks,
 		DBManager:               helper.DBManager,
 		SekaiAPIClient:          helper.SekaiAPIClient,

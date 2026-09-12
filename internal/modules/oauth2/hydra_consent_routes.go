@@ -29,7 +29,7 @@ func handleHydraGetConsentRequest(hydraConfig *harukiOAuth2.HydraConfig) fiber.H
 		if err := ensureHydraConsentSubjectMatchesCurrentUser(c, resp); err != nil {
 			return respondHydraError(c, err, "failed to validate consent request subject")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "ok", resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ok", resp)
 	}
 }
 
@@ -57,7 +57,7 @@ func handleHydraAcceptConsent(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelp
 		if err != nil {
 			return respondHydraError(c, err, "failed to accept consent request")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "consent accepted", redirect)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "consent accepted", redirect)
 	}
 }
 
@@ -96,7 +96,7 @@ func handleHydraRejectConsent(hydraConfig *harukiOAuth2.HydraConfig) fiber.Handl
 		if err != nil {
 			return respondHydraError(c, err, "failed to reject consent request")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "consent rejected", redirect)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "consent rejected", redirect)
 	}
 }
 
@@ -136,7 +136,7 @@ func handleHydraLegacyConsentDecision(apiHelper *harukiAPIHelper.HarukiToolboxRo
 			if rejectErr != nil {
 				return respondHydraError(c, rejectErr, "failed to reject consent request")
 			}
-			return harukiAPIHelper.SuccessResponse(c, "consent rejected", rejectResp)
+			return harukiAPIHelper.Responses.SuccessResponse(c, "consent rejected", rejectResp)
 		}
 
 		grantScope := payload.GrantScope
@@ -148,7 +148,7 @@ func handleHydraLegacyConsentDecision(apiHelper *harukiAPIHelper.HarukiToolboxRo
 		if acceptErr != nil {
 			return respondHydraError(c, acceptErr, "failed to accept consent request")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "consent accepted", redirect)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "consent accepted", redirect)
 	}
 }
 

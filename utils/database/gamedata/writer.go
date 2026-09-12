@@ -2,9 +2,13 @@ package gamedata
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	json "encoding/json/v2"
 	"fmt"
+	"slices"
 	"strings"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 
 	"github.com/jackc/pgx/v5"
 
@@ -102,7 +106,8 @@ type encoded struct {
 	// columns maps column name -> encoded json bytes, for columns the upload
 	// actually carried.
 	columns map[string][]byte
-	// order preserves catalog order so generated SQL is stable.
+	// order tracks first-seen columns; upsertStatement canonicalizes the final
+	// SQL order after adding any columns the write scope clears.
 	order []string
 	// mergedRaw holds the decoded values of the three history keys, kept as Go
 	// values because merging happens against the stored side.
@@ -128,8 +133,8 @@ func (s *Store) encode(data map[string]any, mode WriteMode, stats *WriteStats) (
 	// iteration order.
 	writtenBy := make(map[string]string, len(data))
 
-	extraMembers := make(map[string]json.RawMessage)
-	flattenExtra := make(map[string]json.RawMessage)
+	extraMembers := make(map[string]jsontext.Value)
+	flattenExtra := make(map[string]jsontext.Value)
 
 	for key, value := range data {
 		// DENIED: dropped before the value is encoded, so it never reaches a
@@ -319,7 +324,15 @@ func (s *Store) writeSuite(ctx context.Context, userID int64, code int16, enc *e
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	if len(enc.mergedRaw) > 0 {
-		stored, err := s.readMergedColumns(ctx, tx, userID, code)
+		// Materialize the identity before locking: FOR UPDATE alone cannot lock
+		// a missing row. Concurrent first uploads must serialize as well.
+		ensureRow := fmt.Sprintf(`INSERT INTO %s (%s, %s) VALUES ($1, $2) ON CONFLICT (%s, %s) DO NOTHING`,
+			catalog.QuoteIdent(s.cat.Table), catalog.QuoteIdent(catalog.ColUserID), catalog.QuoteIdent(catalog.ColServer),
+			catalog.QuoteIdent(catalog.ColUserID), catalog.QuoteIdent(catalog.ColServer))
+		if _, err := tx.Exec(ctx, ensureRow, userID, code); err != nil {
+			return fmt.Errorf("gamedata: ensure history row: %w", err)
+		}
+		stored, err := s.readMergedColumns(ctx, tx, userID, code, enc.mergedRaw)
 		if err != nil {
 			return err
 		}
@@ -363,13 +376,17 @@ func mergeHistory(key string, stored, uploaded any) []any {
 	return nil
 }
 
-// readMergedColumns reads the three history columns, decoding with UseNumber so
+// readMergedColumns reads only the histories this upload merges, in canonical
+// key order. It retains the transaction row lock and decodes with jsonvalue.Numbers so
 // a game user id above 2^53 is not corrupted on the way in.
-func (s *Store) readMergedColumns(ctx context.Context, tx pgx.Tx, userID int64, code int16) (map[string]any, error) {
+func (s *Store) readMergedColumns(ctx context.Context, tx pgx.Tx, userID int64, code int16, uploaded map[string]any) (map[string]any, error) {
 	keys := gamemerge.Keys()
 	cols := make([]string, 0, len(keys))
 	present := make([]string, 0, len(keys))
 	for _, k := range keys {
+		if _, requested := uploaded[k]; !requested {
+			continue
+		}
 		e, place := s.cat.Resolve(k)
 		if place != catalog.PlaceColumn {
 			continue
@@ -380,7 +397,7 @@ func (s *Store) readMergedColumns(ctx context.Context, tx pgx.Tx, userID int64, 
 	if len(cols) == 0 {
 		return map[string]any{}, nil
 	}
-	sql := fmt.Sprintf(`SELECT %s FROM %s WHERE %s = $1 AND %s = $2`,
+	sql := fmt.Sprintf(`SELECT %s FROM %s WHERE %s = $1 AND %s = $2 FOR UPDATE`,
 		strings.Join(cols, ", "), catalog.QuoteIdent(s.cat.Table),
 		catalog.QuoteIdent(catalog.ColUserID), catalog.QuoteIdent(catalog.ColServer))
 
@@ -477,8 +494,12 @@ func (s *Store) upsertStatement(userID int64, code int16, enc *encoded, scope cl
 	args := []any{userID, code, nullableInt(enc), nullableBytes(enc.extra)}
 
 	replace, writeOrder := s.replacedColumns(scope, enc.order)
-	for _, col := range writeOrder {
-		cols = append(cols, col)
+	cols = append(cols, writeOrder...)
+	// Map iteration during encoding and history merging must not create a new
+	// prepared statement for every permutation of the same written columns.
+	// Sort our own final list, leaving enc.order unchanged for subsequent uses.
+	slices.Sort(cols[4:])
+	for _, col := range cols[4:] {
 		args = append(args, nullableBytes(enc.columns[col]))
 	}
 
@@ -537,14 +558,13 @@ func encodeJSON(v any) ([]byte, error) {
 	return b, nil
 }
 
-// decodeJSONNumbers decodes with UseNumber. Without it every number becomes a
+// decodeJSONNumbers decodes with jsonvalue.Numbers. Without it every number becomes a
 // float64 and an identity above 2^53 is silently corrupted before the merge even
 // compares it.
 func decodeJSONNumbers(b []byte) (any, error) {
-	dec := json.NewDecoder(strings.NewReader(string(b)))
-	dec.UseNumber()
+
 	var v any
-	if err := dec.Decode(&v); err != nil {
+	if err := json.Unmarshal(b, &v, jsonvalue.Numbers); err != nil {
 		return nil, err
 	}
 	return v, nil

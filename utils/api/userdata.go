@@ -2,9 +2,10 @@ package api
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
-	"strings"
 )
 
 // UserDataBuilder converts database users into API response models using the

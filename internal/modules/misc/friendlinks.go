@@ -48,7 +48,7 @@ func handleGetFriendLinks(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers,
 				Tags:        tags,
 			})
 		}
-		return harukiAPIHelper.SuccessResponse[[]FriendLinkData](c, "Successfully fetched friend links", &result)
+		return harukiAPIHelper.Responses.SuccessResponse[[]FriendLinkData](c, "Successfully fetched friend links", &result)
 	}
 }
 

@@ -2,10 +2,11 @@ package usersocial
 
 import (
 	"fmt"
+	"time"
+
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -64,7 +65,7 @@ func respondQQMailRateLimited(c fiber.Ctx, key string, message string, apiHelper
 		}
 	}
 	c.Set("Retry-After", fmt.Sprintf("%d", retryAfter))
-	return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusTooManyRequests, fmt.Sprintf("%s (retry after %ds)", message, retryAfter), nil)
+	return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusTooManyRequests, fmt.Sprintf("%s (retry after %ds)", message, retryAfter), nil)
 }
 
 func checkQQMailSendRateLimit(c fiber.Ctx, apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, userID, qq string) (limited bool, key string, message string, err error) {

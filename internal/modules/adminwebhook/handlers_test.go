@@ -2,7 +2,7 @@ package adminwebhook
 
 import (
 	"context"
-	"encoding/json"
+	json "encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -115,7 +115,7 @@ func TestAdminWebhookCRUDHandlers(t *testing.T) {
 	var createBody struct {
 		UpdatedData adminWebhookMutationResponse `json:"updatedData"`
 	}
-	if err := json.NewDecoder(createResp.Body).Decode(&createBody); err != nil {
+	if err := json.UnmarshalRead(createResp.Body, &createBody); err != nil {
 		t.Fatalf("decode create response returned error: %v", err)
 	}
 	if createBody.UpdatedData.Webhook.ID != "1" {
@@ -168,7 +168,7 @@ func TestAdminWebhookCRUDHandlers(t *testing.T) {
 	var updateBody struct {
 		UpdatedData adminWebhookMutationResponse `json:"updatedData"`
 	}
-	if err := json.NewDecoder(updateResp.Body).Decode(&updateBody); err != nil {
+	if err := json.UnmarshalRead(updateResp.Body, &updateBody); err != nil {
 		t.Fatalf("decode update response returned error: %v", err)
 	}
 	if updateBody.UpdatedData.Token == "" {

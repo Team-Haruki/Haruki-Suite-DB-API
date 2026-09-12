@@ -17,6 +17,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsoncodec"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -105,6 +108,11 @@ func resolvePoolConfig(cfg PoolConfig) (*pgxpool.Config, error) {
 	}
 	if cfg.MaxConnIdleTime > 0 {
 		pgxCfg.MaxConnIdleTime = cfg.MaxConnIdleTime
+	}
+	pgxCfg.AfterConnect = func(_ context.Context, conn *pgx.Conn) error {
+		conn.TypeMap().RegisterType(&pgtype.Type{Name: "json", OID: pgtype.JSONOID, Codec: &pgtype.JSONCodec{Marshal: jsoncodec.Marshal, Unmarshal: jsoncodec.Unmarshal}})
+		conn.TypeMap().RegisterType(&pgtype.Type{Name: "jsonb", OID: pgtype.JSONBOID, Codec: &pgtype.JSONBCodec{Marshal: jsoncodec.Marshal, Unmarshal: jsoncodec.Unmarshal}})
+		return nil
 	}
 	return pgxCfg, nil
 }

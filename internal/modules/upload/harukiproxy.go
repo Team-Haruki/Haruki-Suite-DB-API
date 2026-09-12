@@ -3,12 +3,13 @@ package upload
 import (
 	"crypto/subtle"
 	"fmt"
-	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
-	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
-	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"regexp"
 	"strconv"
 	"strings"
+
+	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
+	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
+	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 
 	"crypto/aes"
 	"crypto/cipher"
@@ -133,11 +134,11 @@ func handleHarukiProxyUpload(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpe
 		)
 		if err != nil {
 			if mapped := mapUploadProcessingError(err); mapped != nil {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
 			}
 			return harukiAPIHelper.ErrorBadRequest(c, "failed to process upload")
 		}
-		return harukiAPIHelper.SuccessResponse[string](c, fmt.Sprintf("%s server user %d successfully uploaded %s data.", serverStr, gameUserID, dataType), nil)
+		return harukiAPIHelper.Responses.SuccessResponse[string](c, fmt.Sprintf("%s server user %d successfully uploaded %s data.", serverStr, gameUserID, dataType), nil)
 	}
 }
 

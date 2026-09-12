@@ -1,7 +1,7 @@
 package userpasswordreset
 
 import (
-	"encoding/json"
+	json "encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -42,7 +42,7 @@ func TestHandleSendResetPasswordViaKratos(t *testing.T) {
 				t.Fatalf("flow = %q, want %q", flow, "flow-recovery-api-1")
 			}
 			var payload map[string]string
-			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			if err := json.UnmarshalRead(r.Body, &payload); err != nil {
 				t.Fatalf("decode recovery payload failed: %v", err)
 			}
 			gotMethod = payload["method"]

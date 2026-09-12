@@ -2,11 +2,14 @@ package gamedata
 
 import (
 	"context"
-	"encoding/json"
+	json "encoding/json/v2"
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/gamedata/catalog"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 )
 
 // The write path against a REAL PostgreSQL.
@@ -311,5 +314,116 @@ func TestWriteKeepsRegionsSeparate(t *testing.T) {
 	tw, _ := mustValue(t, s, ctx, id, "tw", "userCards")
 	if jp != `[1]` || tw != `[2]` {
 		t.Fatalf("regions bled into each other: jp=%s tw=%s", jp, tw)
+	}
+}
+
+// A v2-only Marshaler must also work through pgx's implicit JSONB codec.
+func TestPoolUsesJSONv2Codec(t *testing.T) {
+	s, ctx := writeTestStore(t, catalog.Suite())
+	var kind, id string
+	input := struct {
+		ID jsonvalue.Number `json:"id"`
+	}{ID: jsonvalue.Number("9007199254740993")}
+	err := s.pool.QueryRow(ctx, "SELECT jsonb_typeof($1::jsonb->'id'), $1::jsonb->>'id'", input).Scan(&kind, &id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if kind != "number" || id != "9007199254740993" {
+		t.Fatalf("pgx JSON codec changed number: %s %s", kind, id)
+	}
+}
+
+func TestWriteSuiteRefreshesSameEvent(t *testing.T) {
+	s, ctx := writeTestStore(t, catalog.Suite())
+	const id = int64(81)
+	for _, point := range []int{100, 200} {
+		mustWrite(t, s, ctx, id, "jp", map[string]any{
+			"userEvents": []any{map[string]any{"eventId": 1, "eventPoint": point, "rank": 10, "rankingRewardReceivedAt": 0}},
+		}, WriteSuite)
+	}
+	mustWrite(t, s, ctx, id, "jp", map[string]any{
+		"userEvents": []any{map[string]any{"eventId": 1, "eventPoint": 200, "rank": 12, "rankingRewardReceivedAt": 1758686145}},
+	}, WriteSuite)
+	raw, _ := mustValue(t, s, ctx, id, "jp", "userEvents")
+	var events []struct {
+		EventID  int   `json:"eventId"`
+		Point    int   `json:"eventPoint"`
+		Rank     int   `json:"rank"`
+		Received int64 `json:"rankingRewardReceivedAt"`
+	}
+	if err := json.Unmarshal([]byte(raw), &events); err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Point != 200 || events[0].Rank != 12 || events[0].Received != 1758686145 {
+		t.Fatalf("stale event: %s", raw)
+	}
+}
+
+// Hold writes until both uploads have reached PostgreSQL. Without serialization
+// both read the same old history before blocking, and the last upsert loses one.
+func TestWriteSuiteConcurrentUploadsPreserveHistory(t *testing.T) {
+	for _, existing := range []bool{false, true} {
+		t.Run(fmt.Sprint("existing=", existing), func(t *testing.T) {
+			s, ctx := writeTestStore(t, catalog.Suite())
+			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+			const id = int64(82)
+			if existing {
+				mustWrite(t, s, ctx, id, "jp", map[string]any{"userEvents": []any{map[string]any{"eventId": 0, "eventPoint": 10}}}, WriteSuite)
+			}
+			blocker, err := s.pool.Begin(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer blocker.Rollback(context.Background())
+			if _, err = blocker.Exec(ctx, "LOCK TABLE game_suite IN SHARE ROW EXCLUSIVE MODE"); err != nil {
+				t.Fatal(err)
+			}
+			var pid int
+			if err = blocker.QueryRow(ctx, "SELECT pg_backend_pid()").Scan(&pid); err != nil {
+				t.Fatal(err)
+			}
+			done := make(chan error, 2)
+			for _, event := range []int{1, 2} {
+				go func() {
+					_, err := s.Write(ctx, id, "jp", map[string]any{"userEvents": []any{map[string]any{"eventId": event, "eventPoint": 100}}}, WriteSuite, DefaultLimits())
+					done <- err
+				}()
+			}
+			for {
+				var waiting int
+				if err = s.pool.QueryRow(ctx, "SELECT count(*) FROM pg_stat_activity WHERE $1 = ANY(pg_blocking_pids(pid))", pid).Scan(&waiting); err != nil {
+					t.Fatal(err)
+				}
+				if waiting == 2 {
+					break
+				}
+				select {
+				case <-ctx.Done():
+					t.Fatal(ctx.Err())
+				case <-time.After(10 * time.Millisecond):
+				}
+			}
+			if err = blocker.Commit(ctx); err != nil {
+				t.Fatal(err)
+			}
+			for range 2 {
+				if err = <-done; err != nil {
+					t.Fatal(err)
+				}
+			}
+			raw, _ := mustValue(t, s, ctx, id, "jp", "userEvents")
+			var events []map[string]any
+			if err = json.Unmarshal([]byte(raw), &events); err != nil {
+				t.Fatal(err)
+			}
+			want := 2
+			if existing {
+				want++
+			}
+			if len(events) != want {
+				t.Fatalf("concurrent upload lost history: %s", raw)
+			}
+		})
 	}
 }

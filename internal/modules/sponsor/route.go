@@ -3,10 +3,12 @@ package sponsor
 import (
 	"bytes"
 	"crypto/subtle"
-	"encoding/json"
+	json "encoding/json/v2"
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
@@ -40,7 +42,7 @@ func handleGetSponsors(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) fi
 			return harukiAPIHelper.ErrorInternal(c, "failed to query sponsors")
 		}
 		resp := BuildSponsorPageResponse(rows, time.Now().UTC())
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -77,9 +79,8 @@ func handleAfdianCallback(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers,
 		}
 
 		var payload map[string]any
-		decoder := json.NewDecoder(bytes.NewReader(c.Body()))
-		decoder.UseNumber()
-		if err := decoder.Decode(&payload); err != nil {
+
+		if err := json.UnmarshalRead(bytes.NewReader(c.Body()), &payload, jsonvalue.Numbers); err != nil {
 			return afdianAck(c)
 		}
 

@@ -53,7 +53,7 @@ func handleGetFriendGroups(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers
 				GroupList: items,
 			})
 		}
-		return harukiAPIHelper.SuccessResponse[[]FriendGroupData](c, "Successfully fetched friend groups", &result)
+		return harukiAPIHelper.Responses.SuccessResponse[[]FriendGroupData](c, "Successfully fetched friend groups", &result)
 	}
 }
 

@@ -3,12 +3,13 @@ package upload
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiBackground "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/background"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
-	"strings"
-	"time"
 )
 
 var uploadAuditSemaphore = make(chan struct{}, 64)

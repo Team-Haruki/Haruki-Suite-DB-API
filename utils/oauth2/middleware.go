@@ -3,12 +3,8 @@ package oauth2
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	json "encoding/json/v2"
 	"fmt"
-	platformAuthHeader "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/authheader"
-	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
-	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
-	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"io"
 	"net/http"
 	"net/url"
@@ -16,7 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bytedance/sonic"
+	platformAuthHeader "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/authheader"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
+	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
+	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
+
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -284,7 +285,7 @@ func introspectHydraToken(ctx context.Context, hydraConfig *HydraConfig, token s
 	if resp.StatusCode != http.StatusOK {
 		message := http.StatusText(resp.StatusCode)
 		var parsed map[string]any
-		if err := sonic.Unmarshal(respBody, &parsed); err == nil {
+		if err := json.Unmarshal(respBody, &parsed); err == nil {
 			for _, key := range []string{"error_description", "message", "error"} {
 				if value := strings.TrimSpace(stringifyAny(parsed[key])); value != "" {
 					message = value
@@ -296,7 +297,7 @@ func introspectHydraToken(ctx context.Context, hydraConfig *HydraConfig, token s
 	}
 
 	var parsed hydraIntrospectionResponse
-	if err := sonic.Unmarshal(respBody, &parsed); err != nil {
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
 		return nil, fmt.Errorf("failed to decode hydra introspection payload: %w", err)
 	}
 	return &parsed, nil
@@ -306,7 +307,7 @@ func stringifyAny(value any) string {
 	switch typed := value.(type) {
 	case string:
 		return typed
-	case json.Number:
+	case jsonvalue.Number:
 		return typed.String()
 	case fmt.Stringer:
 		return typed.String()

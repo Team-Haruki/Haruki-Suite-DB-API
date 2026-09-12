@@ -3,11 +3,15 @@ package bootstrap
 import (
 	"context"
 	"database/sql"
+	json "encoding/json/v2"
 	"runtime"
 	"sync"
 	"time"
 
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/gamedata"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/handler"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/perfstats"
 )
 
 const defaultProfilingInterval = 15 * time.Second
@@ -24,7 +28,7 @@ type sqlPoolSource struct {
 // mirrors the afdian scheduler's lifecycle: cancel ctx then call the returned wait
 // before closing the DB handles it samples, so it never touches a closed pool.
 // It is only started when profiling is enabled.
-func startStatsSampler(ctx context.Context, interval time.Duration, sqlPools []sqlPoolSource, logger *harukiLogger.Logger) func() {
+func startStatsSampler(ctx context.Context, interval time.Duration, sqlPools []sqlPoolSource, gameDataPool *gamedata.Pool, logger *harukiLogger.Logger) func() {
 	if interval <= 0 {
 		interval = defaultProfilingInterval
 	}
@@ -46,14 +50,14 @@ func startStatsSampler(ctx context.Context, interval time.Duration, sqlPools []s
 				logger.Infof("profiling stats sampler stopped")
 				return
 			case <-ticker.C:
-				sampleStats(sqlPools, logger, &mem, &lastNumGC, &lastPauseTotal)
+				sampleStats(sqlPools, gameDataPool, logger, &mem, &lastNumGC, &lastPauseTotal)
 			}
 		}
 	}()
 	return wg.Wait
 }
 
-func sampleStats(sqlPools []sqlPoolSource, logger *harukiLogger.Logger, mem *runtime.MemStats, lastNumGC *uint32, lastPauseTotal *uint64) {
+func sampleStats(sqlPools []sqlPoolSource, gameDataPool *gamedata.Pool, logger *harukiLogger.Logger, mem *runtime.MemStats, lastNumGC *uint32, lastPauseTotal *uint64) {
 	for _, p := range sqlPools {
 		if p.db == nil {
 			continue
@@ -63,6 +67,14 @@ func sampleStats(sqlPools []sqlPoolSource, logger *harukiLogger.Logger, mem *run
 			p.name, st.OpenConnections, st.MaxOpenConnections, st.InUse, st.Idle,
 			st.WaitCount, st.WaitDuration.Round(time.Millisecond), st.MaxIdleTimeClosed, st.MaxLifetimeClosed)
 	}
+
+	if gameDataPool != nil && gameDataPool.Pool != nil {
+		st := gameDataPool.Stat()
+		logger.Infof("pgx pool[gamedata]: total=%d/%d acquired=%d idle=%d acquireCount=%d acquireDuration=%s emptyAcquireCount=%d canceledAcquireCount=%d", st.TotalConns(), st.MaxConns(), st.AcquiredConns(), st.IdleConns(), st.AcquireCount(), st.AcquireDuration(), st.EmptyAcquireCount(), st.CanceledAcquireCount())
+	}
+	stages, _ := json.Marshal(perfstats.Snapshot())
+	fanout, _ := json.Marshal(handler.UploadFanoutStats())
+	logger.Infof("performance stages_cumulative=%s fanout=%s", stages, fanout)
 
 	runtime.ReadMemStats(mem)
 	gcDelta := mem.NumGC - *lastNumGC

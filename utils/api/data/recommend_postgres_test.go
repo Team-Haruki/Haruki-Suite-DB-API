@@ -1,9 +1,10 @@
 package data
 
 import (
-	"encoding/json"
 	"os"
 	"testing"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database"
@@ -41,7 +42,7 @@ func TestDeckRecommendationUsesPostgresAndPreservesNumericIDs(t *testing.T) {
 		t.Fatal(err)
 	}
 	profile := got["userGamedata"].(map[string]any)
-	if profile["userId"] != json.Number("28808221489823746") {
+	if profile["userId"] != jsonvalue.Number("28808221489823746") {
 		t.Fatalf("ID lost precision: %v", profile["userId"])
 	}
 	if _, ok := profile["secret"]; ok {

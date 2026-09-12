@@ -1,11 +1,12 @@
 package userprofile
 
 import (
-	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 
 	"github.com/gofiber/fiber/v3"
 )

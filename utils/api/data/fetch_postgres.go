@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/bytedance/sonic"
+	json "encoding/json/v2"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -125,7 +125,7 @@ func EncodeGameDataBody(resp any) ([]byte, error) {
 	if body, ok := resp.([]byte); ok {
 		return body, nil
 	}
-	return sonic.Marshal(resp)
+	return json.Marshal(resp)
 }
 
 // SendGameDataResponse writes a game-data handler result to the response.

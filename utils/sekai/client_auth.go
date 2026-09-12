@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	"math"
 	"strconv"
 	"strings"
+
+	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 )
 
 func (c *HarukiSekaiClient) InheritAccount(ctx context.Context, returnUserID bool) error {

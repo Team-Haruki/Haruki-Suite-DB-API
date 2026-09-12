@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"net/netip"
 
+	"strings"
+
 	harukiConfig "github.com/Team-Haruki/Haruki-Toolbox-Backend/config"
 	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
-	"strings"
 )
 
 func validateUserSystemConfig(cfg harukiConfig.Config) error {

@@ -3,13 +3,14 @@ package sekai
 import (
 	"context"
 	"errors"
-	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 )
 
 func TestNewSekaiDataRetriever_InvalidServer(t *testing.T) {

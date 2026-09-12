@@ -1,14 +1,15 @@
 package adminusers
 
 import (
+	"strings"
+	"time"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/systemlog"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/uploadlog"
 	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
-	"strings"
-	"time"
 
 	sql "entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
@@ -151,7 +152,7 @@ func handleGetUserDetail(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, 
 			CreatedAt:       createdAt,
 			ActivitySummary: activitySummary,
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -217,9 +218,9 @@ func handleForceLogoutUser(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers
 			adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionUserForceLogout, adminAuditTargetTypeUser, targetUser.ID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{
 				"sessionClearFailed": true,
 			})
-			return harukiAPIHelper.SuccessResponse(c, "user sessions cleared partially", &resp)
+			return harukiAPIHelper.Responses.SuccessResponse(c, "user sessions cleared partially", &resp)
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionUserForceLogout, adminAuditTargetTypeUser, targetUser.ID, harukiAPIHelper.SystemLogResultSuccess, nil)
-		return harukiAPIHelper.SuccessResponse(c, "user sessions cleared", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "user sessions cleared", &resp)
 	}
 }

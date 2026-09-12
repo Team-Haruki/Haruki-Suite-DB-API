@@ -57,6 +57,7 @@ func (c BirthdaySubscriptionConfig) timeout() time.Duration {
 }
 
 type DataHandler struct {
+	DataSync                DataSyncConfig
 	BackgroundTasks         harukiBackground.Runner
 	DBManager               *database.HarukiToolboxDBManager
 	SekaiAPIClient          *sekaiapi.HarukiSekaiAPIClient

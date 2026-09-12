@@ -2,6 +2,7 @@ package oauth2
 
 import (
 	"fmt"
+
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
@@ -53,7 +54,7 @@ func handleOAuth2GetUserProfile(apiHelper *harukiAPIHelper.HarukiToolboxRouterHe
 			Name:       u.Name,
 			AvatarPath: avatarURL,
 		}
-		return harukiAPIHelper.SuccessResponse(c, "ok", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ok", &resp)
 	}
 }
 
@@ -81,7 +82,7 @@ func handleOAuth2GetBindings(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpe
 			})
 		}
 
-		return harukiAPIHelper.SuccessResponse(c, "ok", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ok", &resp)
 	}
 }
 

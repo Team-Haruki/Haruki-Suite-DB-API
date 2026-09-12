@@ -2,10 +2,11 @@ package upload
 
 import (
 	"fmt"
+	"strconv"
+
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
-	"strconv"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -45,11 +46,11 @@ func handleManualUpload(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, d
 		)
 		if err != nil {
 			if mapped := mapUploadProcessingError(err); mapped != nil {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
 			}
 			return harukiAPIHelper.ErrorBadRequest(c, "failed to process upload")
 		}
-		return harukiAPIHelper.SuccessResponse[string](c, fmt.Sprintf("%s server user %d successfully uploaded %s data.", serverStr, gameUserID, dataType), nil)
+		return harukiAPIHelper.Responses.SuccessResponse[string](c, fmt.Sprintf("%s server user %d successfully uploaded %s data.", serverStr, gameUserID, dataType), nil)
 	}
 }
 

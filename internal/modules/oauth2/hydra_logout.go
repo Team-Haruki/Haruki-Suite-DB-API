@@ -28,7 +28,7 @@ func handleHydraGetLogoutRequest(hydraConfig *harukiOAuth2.HydraConfig) fiber.Ha
 		if err != nil {
 			return respondHydraError(c, err, "failed to query logout request")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "ok", resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ok", resp)
 	}
 }
 
@@ -51,7 +51,7 @@ func handleHydraAcceptLogout(hydraConfig *harukiOAuth2.HydraConfig) fiber.Handle
 		if err != nil {
 			return respondHydraError(c, err, "failed to accept logout request")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "logout accepted", redirect)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "logout accepted", redirect)
 	}
 }
 
@@ -75,6 +75,6 @@ func handleHydraRejectLogout(hydraConfig *harukiOAuth2.HydraConfig) fiber.Handle
 			url.Values{"logout_challenge": {payload.LogoutChallenge}}, nil); err != nil {
 			return respondHydraError(c, err, "failed to reject logout request")
 		}
-		return harukiAPIHelper.SuccessResponse[string](c, "logout rejected", nil)
+		return harukiAPIHelper.Responses.SuccessResponse[string](c, "logout rejected", nil)
 	}
 }

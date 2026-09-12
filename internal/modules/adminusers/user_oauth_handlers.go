@@ -1,14 +1,15 @@
 package adminusers
 
 import (
+	"hash/fnv"
+	"strings"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	oauth2Module "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/oauth2"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
 	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
-	"hash/fnv"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -74,7 +75,7 @@ func handleListUserOAuthAuthorizations(apiHelper *harukiAPIHelper.HarukiToolboxR
 		}
 		resp := adminOAuthAuthorizationListResponse{GeneratedAt: adminNowUTC(), UserID: targetUser.ID, IncludeRevoked: false, Total: len(items), Items: items}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionUserOAuthList, adminAuditTargetTypeUser, targetUser.ID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"includeRevoked": false, "total": resp.Total, "hydraMode": true})
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -144,7 +145,7 @@ func handleRevokeUserOAuth(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers
 		}
 		resp := adminRevokeOAuthResponse{UserID: targetUser.ID, ClientID: responseClientID, RevokedAuthorizations: revokedAuthorizations, RevokedAuthorizationsExact: &revokedAuthorizationsExact, RevokedTokens: revokedTokens, RevokedTokensExact: &revokedTokensExact}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionUserOAuthRevoke, adminAuditTargetTypeUser, targetUser.ID, harukiAPIHelper.SystemLogResultSuccess, metadata)
-		return harukiAPIHelper.SuccessResponse(c, "oauth authorizations revoked", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "oauth authorizations revoked", &resp)
 	}
 }
 

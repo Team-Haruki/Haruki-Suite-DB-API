@@ -39,7 +39,7 @@ type Snapshot struct {
 	HarukiProxySecret    string   `json:"harukiProxySecret"`
 	HarukiProxyUnpackKey string   `json:"harukiProxyUnpackKey"`
 	WebhookJWTSecret     string   `json:"webhookJwtSecret"`
-	WebhookEnabled       *bool    `json:"webhookEnabled,omitempty"`
+	WebhookEnabled       *bool    `json:"webhookEnabled,omitzero"`
 }
 
 // Store distributes mutable settings between backend instances.

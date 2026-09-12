@@ -76,7 +76,7 @@ func handleSendResetPassword(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpe
 		}
 
 		reason = "managed_identity_required"
-		return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusGone, userauth.ManagedIdentityMessage, nil)
+		return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusGone, userauth.ManagedIdentityMessage, nil)
 	}
 }
 
@@ -98,5 +98,5 @@ func handleSendResetPasswordViaKratos(
 	}
 	*result = harukiAPIHelper.SystemLogResultSuccess
 	*reason = "ok"
-	return harukiAPIHelper.SuccessResponse[string](c, "Reset password email sent", nil)
+	return harukiAPIHelper.Responses.SuccessResponse[string](c, "Reset password email sent", nil)
 }

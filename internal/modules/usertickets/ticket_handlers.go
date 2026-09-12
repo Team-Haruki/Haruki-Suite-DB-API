@@ -3,6 +3,10 @@ package usertickets
 import (
 	"context"
 	"errors"
+	"math"
+	"strings"
+	"time"
+
 	ticketsModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/tickets"
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	platformMailNotify "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/mailnotify"
@@ -11,9 +15,6 @@ import (
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/ticket"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/ticketmessage"
-	"math"
-	"strings"
-	"time"
 
 	sql "entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
@@ -55,7 +56,7 @@ func handleCreateOwnTicket(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers
 		if err != nil {
 			reason = "invalid_priority"
 			if fiberErr, ok := err.(*fiber.Error); ok {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
 			}
 			return harukiAPIHelper.ErrorBadRequest(c, "invalid priority")
 		}
@@ -63,7 +64,7 @@ func handleCreateOwnTicket(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers
 		if err != nil {
 			reason = "invalid_category"
 			if fiberErr, ok := err.(*fiber.Error); ok {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
 			}
 			return harukiAPIHelper.ErrorBadRequest(c, "invalid category")
 		}
@@ -129,7 +130,7 @@ func handleCreateOwnTicket(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers
 			ticketsModule.NotifyAdminsOfNewTicket(ctx, apiHelper.DBManager.DB, event)
 		})
 		resp := createUserTicketResponse{TicketID: ticketID}
-		return harukiAPIHelper.SuccessResponse(c, "ticket created", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ticket created", &resp)
 	}
 }
 
@@ -142,21 +143,21 @@ func handleListOwnTickets(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers)
 		statusFilter, err := parseUserTicketStatus(c.Query("status"))
 		if err != nil {
 			if fiberErr, ok := err.(*fiber.Error); ok {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
 			}
 			return harukiAPIHelper.ErrorBadRequest(c, "invalid status")
 		}
 		page, err := platformPagination.ParsePositiveInt(c.Query("page"), defaultUserTicketPage, "page")
 		if err != nil {
 			if fiberErr, ok := err.(*fiber.Error); ok {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
 			}
 			return harukiAPIHelper.ErrorBadRequest(c, "invalid page")
 		}
 		pageSize, err := platformPagination.ParsePositiveInt(c.Query("page_size"), defaultUserTicketPageSize, "page_size")
 		if err != nil {
 			if fiberErr, ok := err.(*fiber.Error); ok {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiberErr.Code, fiberErr.Message, nil)
 			}
 			return harukiAPIHelper.ErrorBadRequest(c, "invalid page_size")
 		}
@@ -200,7 +201,7 @@ func handleListOwnTickets(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers)
 			HasMore:     page < totalPages,
 			Items:       items,
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -235,7 +236,7 @@ func handleGetOwnTicketDetail(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelp
 			Ticket:   buildUserTicketListItem(row),
 			Messages: buildUserTicketMessageItems(row.Edges.Messages),
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -288,7 +289,7 @@ func handleAppendOwnTicketMessage(apiHelper *harukiAPIHelper.HarukiToolboxRouter
 			ticketsModule.NotifyAdminsOfUserReply(ctx, apiHelper.DBManager.DB, event)
 		})
 		items := buildUserTicketMessageItems([]*postgresql.TicketMessage{createdMessage})
-		return harukiAPIHelper.SuccessResponse(c, "message added", &items[0])
+		return harukiAPIHelper.Responses.SuccessResponse(c, "message added", &items[0])
 	}
 }
 
@@ -316,6 +317,6 @@ func handleCloseOwnTicket(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers)
 			return harukiAPIHelper.ErrorInternal(c, "failed to close ticket")
 		}
 		resp := buildUserTicketListItem(updated)
-		return harukiAPIHelper.SuccessResponse(c, "ticket closed", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ticket closed", &resp)
 	}
 }

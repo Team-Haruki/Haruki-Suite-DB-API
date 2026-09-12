@@ -1,11 +1,12 @@
 package upload
 
 import (
+	"strconv"
+
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/sekai"
-	"strconv"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -93,7 +94,7 @@ func HandleProxyUpload(
 		}
 		if _, err := HandleUpload(ctx, resp.RawBody, server, dataType, &userID, nil, helper, dependencies, harukiUtils.UploadMethodIOSProxy); err != nil {
 			if mapped := mapUploadProcessingError(err); mapped != nil {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
 			}
 			harukiLogger.Warnf("Proxy upload persist failed for %s/%s/%s: %v", serverStr, userIDStr, dataType, err)
 			return fiber.NewError(fiber.StatusInternalServerError, "failed to process uploaded data")

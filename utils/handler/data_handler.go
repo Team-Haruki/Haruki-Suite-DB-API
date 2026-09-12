@@ -8,6 +8,7 @@ import (
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	apiHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/perfstats"
 )
 
 func (h *DataHandler) HandleAndUpdateData(
@@ -39,6 +40,7 @@ func (h *DataHandler) HandleAndUpdateData(
 }
 
 func (h *DataHandler) DecodeUploadData(raw []byte, server utils.SupportedDataUploadServer) (map[string]any, *utils.HandleDataResult, error) {
+	defer perfstats.Track(perfstats.UploadDecode)()
 	unpacked, err := h.ServerCryptor.Unpack(raw, server)
 	if err != nil {
 		h.Logger.Errorf("unpack failed: %v", err)
@@ -64,6 +66,7 @@ func (h *DataHandler) ExtractGameUserIDForExpected(data map[string]any, expected
 }
 
 func (h *DataHandler) PersistUploadData(ctx context.Context, data map[string]any, server utils.SupportedDataUploadServer, dataType utils.UploadDataType, expectedUserID *int64) error {
+	defer perfstats.Track(perfstats.UploadPersist)()
 	if expectedUserID == nil {
 		return fmt.Errorf("game user ID is required")
 	}
@@ -75,20 +78,42 @@ func (h *DataHandler) RunUploadFanout(raw []byte, data map[string]any, server ut
 		return
 	}
 	userID := *expectedUserID
+	targets := buildSyncTargets(h.DataSync.providers, dataType, settings)
+	inputBytes := int64(0)
+	if len(targets) > 0 {
+		inputBytes = int64(len(raw))
+	}
+	stopWait := perfstats.Track(perfstats.FanoutAdmission)
+	release := uploadFanoutLimit.acquire(inputBytes)
+	stopWait()
+	transferred := false
+	defer func() {
+		if !transferred {
+			release()
+		}
+	}()
+	// A normal upload must not retain the DB-preprocessed object in its closure.
+	var birthdayData map[string]any
+	if dataType == utils.UploadDataTypeMysekaiBirthdayParty {
+		birthdayData = data
+	}
 
 	var syncBody []byte
-	if dataType != utils.UploadDataTypeMysekaiBirthdayParty {
-		syncBody = append([]byte(nil), raw...)
-	} else {
-		packedBody, err := h.ServerCryptor.Pack(data, server)
-		if err != nil {
-			h.Logger.Errorf("pack birthday party data failed: %v", err)
+	if len(targets) > 0 {
+		if dataType != utils.UploadDataTypeMysekaiBirthdayParty {
+			syncBody = append([]byte(nil), raw...)
 		} else {
-			syncBody = packedBody
+			packedBody, err := h.ServerCryptor.Pack(data, server)
+			if err != nil {
+				h.Logger.Errorf("pack birthday party data failed: %v", err)
+			} else {
+				syncBody = packedBody
+			}
 		}
 	}
 
-	h.submitBackgroundTask("upload-fanout", func() {
+	transferred = h.submitBackgroundTask("upload-fanout", func() {
+		defer release()
 		var fanout sync.WaitGroup
 		start := func(name string, task func()) {
 			fanout.Add(1)
@@ -105,12 +130,12 @@ func (h *DataHandler) RunUploadFanout(raw []byte, data map[string]any, server ut
 
 		if dataType == utils.UploadDataTypeMysekaiBirthdayParty {
 			start("birthday-subscription", func() {
-				h.processBirthdaySubscription(userID, server, data)
+				h.processBirthdaySubscription(userID, server, birthdayData)
 			})
 		}
 		if len(syncBody) > 0 {
 			start("data-sync", func() {
-				DataSyncer(userID, server, dataType, syncBody, settings, h.ServerCryptor, h.SuiteRestoreService)
+				runDataSyncerTargets(targets, userID, server, dataType, syncBody, h.ServerCryptor, h.SuiteRestoreService, sendData)
 			})
 		}
 		if isPublicAPI {

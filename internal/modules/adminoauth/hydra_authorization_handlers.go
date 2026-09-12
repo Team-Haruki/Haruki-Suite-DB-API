@@ -98,7 +98,7 @@ func handleListHydraOAuthClientAuthorizations(apiHelper *harukiAPIHelper.HarukiT
 			Items:          items,
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientAuthorizationsList, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"hydraMode": true, "includeRevoked": false, "total": total})
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -165,6 +165,6 @@ func handleGetHydraOAuthClientStatistics(apiHelper *harukiAPIHelper.HarukiToolbo
 			Trend: buildAdminOAuthClientTrendPoints(filters.From.UTC(), filters.To.UTC(), filters.Bucket, authorizationTimes, nil),
 		}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientStatisticsQuery, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"hydraMode": true, "authorizationTotal": len(records)})
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }

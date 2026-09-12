@@ -1,12 +1,13 @@
 package adminusers
 
 import (
+	"strings"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
 	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -115,13 +116,13 @@ func handleSoftDeleteUser(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers,
 				"revokedOAuthTokens": revokedOAuthTokens,
 			})
 			message, _ := resolveManagedUserBanFinalizeOutcome(sessionClearFailed, oauthRevokeFailed)
-			return harukiAPIHelper.SuccessResponse(c, strings.Replace(message, "user banned", "user soft deleted", 1), &resp)
+			return harukiAPIHelper.Responses.SuccessResponse(c, strings.Replace(message, "user banned", "user soft deleted", 1), &resp)
 		}
 
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionUserSoftDelete, adminAuditTargetTypeUser, targetUser.ID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{
 			"hasReason":       reason != nil,
 			"clearedSessions": true,
 		})
-		return harukiAPIHelper.SuccessResponse(c, "user soft deleted", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "user soft deleted", &resp)
 	}
 }

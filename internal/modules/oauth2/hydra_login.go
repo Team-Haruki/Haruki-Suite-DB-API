@@ -21,7 +21,7 @@ func handleHydraGetLoginRequest(hydraConfig *harukiOAuth2.HydraConfig) fiber.Han
 		if err != nil {
 			return respondHydraError(c, err, "failed to query login request")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "ok", resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ok", resp)
 	}
 }
 
@@ -57,7 +57,7 @@ func handleHydraAcceptLogin(hydraConfig *harukiOAuth2.HydraConfig) fiber.Handler
 		if err != nil {
 			return respondHydraError(c, err, "failed to accept login request")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "login accepted", redirect)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "login accepted", redirect)
 	}
 }
 
@@ -89,6 +89,6 @@ func handleHydraRejectLogin(hydraConfig *harukiOAuth2.HydraConfig) fiber.Handler
 		if err != nil {
 			return respondHydraError(c, err, "failed to reject login request")
 		}
-		return harukiAPIHelper.SuccessResponse(c, "login rejected", redirect)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "login rejected", redirect)
 	}
 }

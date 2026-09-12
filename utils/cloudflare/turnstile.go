@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsoncodec"
 	"strings"
 	"time"
 
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 
-	"github.com/bytedance/sonic"
+	json "encoding/json/v2"
+
 	"github.com/go-resty/resty/v2"
 )
 
@@ -51,7 +53,7 @@ func NewClient(cfg Config) *Client {
 	if timeout <= 0 {
 		timeout = defaultTimeout
 	}
-	httpClient := resty.New().SetTimeout(timeout)
+	httpClient := jsoncodec.ConfigureResty(resty.New()).SetTimeout(timeout)
 	if proxy := strings.TrimSpace(cfg.Proxy); proxy != "" {
 		httpClient.SetProxy(proxy)
 	}
@@ -89,7 +91,7 @@ func (c *Client) Verify(ctx context.Context, response, remoteIP string) (*Turnst
 	if remoteIP != "" {
 		payload["remoteip"] = remoteIP
 	}
-	body, _ := sonic.Marshal(payload)
+	body, _ := json.Marshal(payload)
 	request := c.httpClient.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(body)
@@ -106,7 +108,7 @@ func (c *Client) Verify(ctx context.Context, response, remoteIP string) (*Turnst
 		return nil, fmt.Errorf("%w: unexpected status %d", ErrTurnstileUnavailable, resp.StatusCode())
 	}
 	var result TurnstileResponse
-	if err := sonic.Unmarshal(resp.Body(), &result); err != nil {
+	if err := json.Unmarshal(resp.Body(), &result); err != nil {
 		harukiLogger.Errorf("Turnstile response decode failed: %v, body: %s", err, string(resp.Body()))
 		return nil, fmt.Errorf("%w: decode failed: %v", ErrTurnstileUnavailable, err)
 	}

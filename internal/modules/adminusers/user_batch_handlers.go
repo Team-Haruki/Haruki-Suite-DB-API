@@ -119,7 +119,7 @@ func handleBatchUserOperation(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelp
 			"success": resp.Success,
 			"failed":  resp.Failed,
 		})
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 

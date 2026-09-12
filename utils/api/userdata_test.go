@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"testing"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 )
 
 func TestBuildUserDataFromDBUserIncludesRole(t *testing.T) {

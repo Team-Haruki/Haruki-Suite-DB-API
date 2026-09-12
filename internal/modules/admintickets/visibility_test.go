@@ -1,7 +1,7 @@
 package admintickets
 
 import (
-	"encoding/json"
+	json "encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -103,7 +103,7 @@ func TestHandleAdminListTicketsScopesCountAndPaginationByCreatorRole(t *testing.
 		var decoded struct {
 			UpdatedData adminTicketListResponse `json:"updatedData"`
 		}
-		if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
+		if err := json.UnmarshalRead(resp.Body, &decoded); err != nil {
 			t.Fatalf("decode response: %v", err)
 		}
 		if decoded.UpdatedData.Total != 2 {
@@ -133,7 +133,7 @@ func TestHandleAdminListTicketsScopesCountAndPaginationByCreatorRole(t *testing.
 		var decoded struct {
 			UpdatedData adminTicketListResponse `json:"updatedData"`
 		}
-		if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
+		if err := json.UnmarshalRead(resp.Body, &decoded); err != nil {
 			t.Fatalf("decode response: %v", err)
 		}
 		if decoded.UpdatedData.Total != 3 || len(decoded.UpdatedData.Items) != 3 {

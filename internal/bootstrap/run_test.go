@@ -2,16 +2,17 @@ package bootstrap
 
 import (
 	"context"
-	harukiConfig "github.com/Team-Haruki/Haruki-Toolbox-Backend/config"
-	dbManager "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
-	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
-	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	harukiConfig "github.com/Team-Haruki/Haruki-Toolbox-Backend/config"
+	dbManager "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
+	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
+	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"

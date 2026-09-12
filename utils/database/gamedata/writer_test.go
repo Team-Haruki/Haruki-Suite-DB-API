@@ -1,10 +1,13 @@
 package gamedata
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	json "encoding/json/v2"
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/gamedata/catalog"
 )
@@ -264,7 +267,7 @@ func TestUnknownKeysGoToExtraAndAreReported(t *testing.T) {
 	if enc.extra == nil {
 		t.Fatal("unknown key did not reach extra")
 	}
-	var m map[string]json.RawMessage
+	var m map[string]jsontext.Value
 	if err := json.Unmarshal(enc.extra, &m); err != nil {
 		t.Fatal(err)
 	}
@@ -287,7 +290,7 @@ func TestUnknownFlattenedChildrenRenestUnderTheParent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var m map[string]json.RawMessage
+	var m map[string]jsontext.Value
 	if err := json.Unmarshal(enc.extra, &m); err != nil {
 		t.Fatal(err)
 	}
@@ -392,8 +395,8 @@ func TestDecodeUsesJSONNumber(t *testing.T) {
 	}
 	arr := v.([]any)
 	m := arr[0].(map[string]any)
-	if _, ok := m["eventId"].(json.Number); !ok {
-		t.Fatalf("eventId decoded as %T, want json.Number", m["eventId"])
+	if _, ok := m["eventId"].(jsonvalue.Number); !ok {
+		t.Fatalf("eventId decoded as %T, want jsonvalue.Number", m["eventId"])
 	}
 }
 
@@ -487,7 +490,7 @@ func mustJSONValue(t *testing.T, s string) any {
 }
 
 func jsonEqual(a, b any) bool {
-	ab, err1 := json.Marshal(a)
-	bb, err2 := json.Marshal(b)
+	ab, err1 := json.Marshal(a, json.Deterministic(true))
+	bb, err2 := json.Marshal(b, json.Deterministic(true))
 	return err1 == nil && err2 == nil && string(ab) == string(bb)
 }

@@ -1,16 +1,17 @@
 package adminusers
 
 import (
-	"encoding/json"
+	json "encoding/json/v2"
 
-	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
-	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
-	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
+	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -39,7 +40,7 @@ func TestHandleListUsersScopesResultsBeforePagination(t *testing.T) {
 	}
 
 	var payload harukiAPIHelper.GenericResponse[adminUserListResponse]
-	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
+	if err := json.UnmarshalRead(response.Body, &payload); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	if payload.UpdatedData == nil {

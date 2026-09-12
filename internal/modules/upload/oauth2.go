@@ -90,12 +90,12 @@ func handleOAuth2Upload(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, d
 			apiHelper, dependencies, harukiUtils.UploadMethodOAuth2,
 		); err != nil {
 			if mapped := mapUploadProcessingError(err); mapped != nil {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, mapped.Code, mapped.Message, nil)
 			}
 			return harukiAPIHelper.ErrorBadRequest(c, "failed to process upload")
 		}
 
-		return harukiAPIHelper.SuccessResponse[string](c,
+		return harukiAPIHelper.Responses.SuccessResponse[string](c,
 			fmt.Sprintf("%s server user %d successfully uploaded %s data.", serverStr, gameUserID, dataType), nil)
 	}
 }

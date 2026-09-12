@@ -32,7 +32,7 @@ const gameAccountCapabilityRecommend = "recommend"
 // accessibleGameAccountCapability describes one readable data type. An absent
 // ExpiresAt means the access does not expire (the requester owns the account).
 type accessibleGameAccountCapability struct {
-	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+	ExpiresAt *time.Time `json:"expiresAt,omitzero"`
 }
 
 type accessibleGameAccountOwner struct {
@@ -87,7 +87,7 @@ func handleListAccessibleGameAccounts(apiHelper *harukiAPIHelper.HarukiToolboxRo
 			Total:       len(accounts),
 			Accounts:    accounts,
 		}
-		return harukiAPIHelper.SuccessResponse(c, "ok", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ok", &resp)
 	}
 }
 

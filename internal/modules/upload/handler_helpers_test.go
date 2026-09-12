@@ -1,10 +1,11 @@
 package upload
 
 import (
+	"testing"
+
 	harukiSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/ent/toolbox/schema"
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
-	"testing"
 )
 
 func TestExtractUploadTypeAndUserID(t *testing.T) {

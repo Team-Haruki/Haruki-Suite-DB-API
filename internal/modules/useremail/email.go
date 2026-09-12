@@ -4,15 +4,16 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"fmt"
+	"math/big"
+	"strings"
+	"time"
+
 	platformIdentity "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/identity"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiCloudflare "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/cloudflare"
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/smtp"
-	"math/big"
-	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -93,7 +94,7 @@ func respondEmailSendRateLimited(c fiber.Ctx, key string, message string, helper
 		}
 	}
 	c.Set("Retry-After", fmt.Sprintf("%d", retryAfter))
-	return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusTooManyRequests, fmt.Sprintf("%s (retry after %ds)", message, retryAfter), nil)
+	return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusTooManyRequests, fmt.Sprintf("%s (retry after %ds)", message, retryAfter), nil)
 }
 
 func checkSendEmailRateLimit(c fiber.Ctx, helper *harukiAPIHelper.HarukiToolboxRouterHelpers, clientIP, email string) (limited bool, key string, message string, err error) {
@@ -195,7 +196,7 @@ func SendEmailHandler(c fiber.Ctx, email, challengeToken string, helper *harukiA
 		}
 		return err
 	}
-	return harukiAPIHelper.SuccessResponse[string](c, "verification code sent", nil)
+	return harukiAPIHelper.Responses.SuccessResponse[string](c, "verification code sent", nil)
 }
 
 func VerifyEmailHandler(c fiber.Ctx, email, oneTimePassword string, helper *harukiAPIHelper.HarukiToolboxRouterHelpers) (bool, error) {

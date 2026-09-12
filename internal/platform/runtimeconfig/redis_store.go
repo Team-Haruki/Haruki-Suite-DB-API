@@ -2,11 +2,13 @@ package runtimeconfig
 
 import (
 	"context"
+
+	"encoding/json/jsontext"
+	jsonv2 "encoding/json/v2"
 	"errors"
 	"fmt"
 
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
-	"github.com/bytedance/sonic"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -28,8 +30,17 @@ func NewRedisStore(manager *harukiRedis.HarukiRedisManager) Store {
 
 func (s *redisStore) Load(ctx context.Context) (Snapshot, bool, error) {
 	var snapshot Snapshot
-	found, err := s.manager.GetCache(ctx, harukiRedis.BuildRuntimeConfigKey(), &snapshot)
-	return snapshot, found, err
+	payload, err := s.manager.Redis.Get(ctx, harukiRedis.BuildRuntimeConfigKey()).Bytes()
+	if errors.Is(err, redis.Nil) {
+		return snapshot, false, nil
+	}
+	if err != nil {
+		return snapshot, false, err
+	}
+	if err := unmarshalSnapshot(payload, &snapshot); err != nil {
+		return snapshot, false, err
+	}
+	return snapshot, true, nil
 }
 
 func (s *redisStore) Apply(ctx context.Context, update Update, fallback Snapshot) (Snapshot, error) {
@@ -44,13 +55,13 @@ func (s *redisStore) Apply(ctx context.Context, update Update, fallback Snapshot
 			case err != nil:
 				return err
 			default:
-				if err := sonic.Unmarshal(payload, &current); err != nil {
+				if err := unmarshalSnapshot(payload, &current); err != nil {
 					return err
 				}
 			}
 
 			applyUpdate(&current, update)
-			encoded, err := sonic.Marshal(current)
+			encoded, err := marshalSnapshot(current)
 			if err != nil {
 				return err
 			}
@@ -75,4 +86,14 @@ func (s *redisStore) Apply(ctx context.Context, update Update, fallback Snapshot
 		return committed, nil
 	}
 	return Snapshot{}, fmt.Errorf("runtime config transaction conflicted after %d attempts", maxRedisApplyAttempts)
+}
+
+// Preserve the existing nil allowlist and native Sonic escaping on writes.
+// Reads use v2 strict syntax and exact member names.
+func marshalSnapshot(snapshot Snapshot) ([]byte, error) {
+	return jsonv2.Marshal(snapshot, jsonv2.FormatNilSliceAsNull(true), jsontext.EscapeForHTML(false), jsontext.EscapeForJS(false))
+}
+
+func unmarshalSnapshot(payload []byte, snapshot *Snapshot) error {
+	return jsonv2.Unmarshal(payload, snapshot)
 }

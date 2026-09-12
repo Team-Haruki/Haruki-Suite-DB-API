@@ -1,12 +1,13 @@
 package useroauth
 
 import (
+	"strings"
+
 	oauth2Module "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/oauth2"
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -51,7 +52,7 @@ func handleListOAuthAuthorizations(apiHelper *harukiAPIHelper.HarukiToolboxRoute
 				CreatedAt:        createdAt,
 			})
 		}
-		return harukiAPIHelper.SuccessResponse(c, "ok", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ok", &resp)
 	}
 }
 
@@ -91,7 +92,7 @@ func handleRevokeOAuthAuthorization(apiHelper *harukiAPIHelper.HarukiToolboxRout
 		}
 		result = harukiAPIHelper.SystemLogResultSuccess
 		reason = "ok"
-		return harukiAPIHelper.SuccessResponse[string](c, "authorization revoked", nil)
+		return harukiAPIHelper.Responses.SuccessResponse[string](c, "authorization revoked", nil)
 	}
 }
 

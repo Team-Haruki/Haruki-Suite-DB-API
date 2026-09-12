@@ -54,6 +54,7 @@ type TurnstileVerifier interface {
 // to the modules that consume them. Keep this structure narrow; database and
 // session access remain on the compatibility helper during their own migrations.
 type Dependencies struct {
+	DataSync             harukiHandler.DataSyncConfig
 	BackgroundTasks      harukiBackground.Runner
 	TurnstileVerifier    TurnstileVerifier
 	UserDataBuilder      harukiAPIHelper.UserDataBuilder
@@ -91,6 +92,7 @@ func RegisterRoutes(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers, depen
 		DataHandlerLogger:         dependencies.UploadLogger,
 		BirthdaySubscription:      dependencies.BirthdaySubscription,
 		SuiteRestoreService:       dependencies.SuiteRestoreService,
+		DataSync:                  dependencies.DataSync,
 		ServerCryptor:             dependencies.ServerCryptor,
 		Proxy:                     dependencies.UploadProxy,
 	})

@@ -5,7 +5,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
-	"encoding/json"
+	json "encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	sponsorSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/sponsor"
@@ -236,7 +238,7 @@ func parseUnixTime(raw any) *time.Time {
 		}
 		t := time.Unix(v, 0).UTC()
 		return &t
-	case json.Number:
+	case jsonvalue.Number:
 		i, err := v.Int64()
 		if err != nil || i <= 0 {
 			return nil
@@ -282,7 +284,7 @@ func readString(record map[string]any, keys ...string) string {
 			if trimmed := strings.TrimSpace(v); trimmed != "" {
 				return trimmed
 			}
-		case json.Number:
+		case jsonvalue.Number:
 			return v.String()
 		case float64:
 			if v == float64(int64(v)) {
@@ -604,9 +606,8 @@ func queryAfdianOrderByTradeNo(ctx context.Context, client *http.Client, baseURL
 	}
 
 	var payload map[string]any
-	decoder := json.NewDecoder(bytes.NewReader(respBody))
-	decoder.UseNumber()
-	if err := decoder.Decode(&payload); err != nil {
+
+	if err := json.UnmarshalRead(bytes.NewReader(respBody), &payload, jsonvalue.Numbers); err != nil {
 		return nil, false, err
 	}
 	if ec := readInt(payload, "ec"); ec != 0 && ec != 200 {
@@ -703,9 +704,8 @@ func queryAfdianSponsorPage(ctx context.Context, client *http.Client, baseURL st
 	}
 
 	var payload map[string]any
-	decoder := json.NewDecoder(bytes.NewReader(respBody))
-	decoder.UseNumber()
-	if err := decoder.Decode(&payload); err != nil {
+
+	if err := json.UnmarshalRead(bytes.NewReader(respBody), &payload, jsonvalue.Numbers); err != nil {
 		return nil, 0, err
 	}
 	if ec := readInt(payload, "ec"); ec != 0 && ec != 200 {

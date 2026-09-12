@@ -64,7 +64,7 @@ func handleListHydraOAuthClientAuditLogs(apiHelper *harukiAPIHelper.HarukiToolbo
 		}
 		resp := adminOAuthClientAuditLogsResponse{GeneratedAt: adminNowUTC(), ClientID: hydraClient.ClientID, ClientName: strings.TrimSpace(hydraClient.ClientName), From: filters.From.UTC(), To: filters.To.UTC(), Page: filters.Page, PageSize: filters.PageSize, Total: total, TotalPages: platformPagination.CalculateTotalPages(total, filters.PageSize), HasMore: platformPagination.HasMoreByOffset(filters.Page, filters.PageSize, total), Sort: filters.Sort, Filters: adminOAuthClientAuditAppliedFilters{ActorTypes: filters.ActorTypes, ActorUserID: filters.ActorUserID, Action: filters.Action, Result: filters.Result}, Items: adminCoreModule.BuildSystemLogItems(rows)}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientAuditLogsQuery, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"hydraMode": true, "from": resp.From.Format(time.RFC3339), "to": resp.To.Format(time.RFC3339), "total": resp.Total})
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -161,6 +161,6 @@ func handleGetHydraOAuthClientAuditSummary(apiHelper *harukiAPIHelper.HarukiTool
 		}
 		resp := adminOAuthClientAuditSummaryResponse{GeneratedAt: adminNowUTC(), ClientID: hydraClient.ClientID, ClientName: strings.TrimSpace(hydraClient.ClientName), From: filters.From.UTC(), To: filters.To.UTC(), Total: total, Success: successCount, Failure: failureCount, ByAction: normalizeCategoryCounts(byActionCounts), ByActorType: normalizeCategoryCounts(byActorTypeCounts), ByResult: normalizeCategoryCounts(byResultCounts), ByReason: buildSystemLogFailureReasonCounts(failureReasonRows)}
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionOAuthClientAuditSummaryQuery, adminAuditTargetTypeOAuthClient, clientID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{"hydraMode": true, "from": resp.From.Format(time.RFC3339), "to": resp.To.Format(time.RFC3339), "total": resp.Total})
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }

@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"strings"
+	"unicode/utf8"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	ticketsModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/tickets"
 	platformPagination "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/pagination"
@@ -11,8 +14,6 @@ import (
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/ticket"
 	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/gofiber/fiber/v3"
 )

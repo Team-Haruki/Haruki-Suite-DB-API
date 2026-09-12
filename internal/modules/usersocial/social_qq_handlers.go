@@ -2,6 +2,8 @@ package usersocial
 
 import (
 	"fmt"
+	"strings"
+
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	userEmailModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/useremail"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
@@ -9,7 +11,6 @@ import (
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/socialplatforminfo"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
-	"strings"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -107,7 +108,7 @@ func handleVerifyQQMail(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) f
 		}
 		if exists {
 			reason = "social_platform_conflict"
-			return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusConflict, "QQ binding already exists", nil)
+			return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusConflict, "QQ binding already exists", nil)
 		}
 		if _, err := apiHelper.DBManager.DB.SocialPlatformInfo.
 			Create().
@@ -118,7 +119,7 @@ func handleVerifyQQMail(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) f
 			Save(ctx); err != nil {
 			if postgresql.IsConstraintError(err) {
 				reason = "social_platform_conflict"
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fiber.StatusConflict, "QQ binding already exists", nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fiber.StatusConflict, "QQ binding already exists", nil)
 			}
 			harukiLogger.Errorf("Failed to create social platform info: %v", err)
 			reason = "create_social_platform_failed"
@@ -134,6 +135,6 @@ func handleVerifyQQMail(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpers) f
 		}
 		result = harukiAPIHelper.SystemLogResultSuccess
 		reason = "ok"
-		return harukiAPIHelper.SuccessResponse(c, "social platform verified", &ud)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "social platform verified", &ud)
 	}
 }

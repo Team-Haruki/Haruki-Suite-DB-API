@@ -3,6 +3,8 @@ package admintickets
 import (
 	"context"
 	"errors"
+	"strings"
+
 	adminCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/admincore"
 	ticketsModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/tickets"
 	platformMailNotify "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/platform/mailnotify"
@@ -12,7 +14,6 @@ import (
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/ticket"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/ticketmessage"
 	userSchema "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql/user"
-	"strings"
 
 	sql "entgo.io/ent/dialect/sql"
 	"github.com/gofiber/fiber/v3"
@@ -69,7 +70,7 @@ func handleAdminListTickets(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelper
 			HasMore:     platformPagination.HasMoreByTotalPages(filters.Page, totalPages),
 			Items:       items,
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -113,7 +114,7 @@ func handleAdminGetTicketDetail(apiHelper *harukiAPIHelper.HarukiToolboxRouterHe
 			Ticket:   buildAdminTicketListItem(row, userNameByUserID),
 			Messages: buildAdminTicketMessageItems(row.Edges.Messages, userNameByUserID),
 		}
-		return harukiAPIHelper.SuccessResponse(c, "success", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "success", &resp)
 	}
 }
 
@@ -178,7 +179,7 @@ func handleAdminAppendTicketMessage(apiHelper *harukiAPIHelper.HarukiToolboxRout
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionTicketMessageAppend, adminAuditTargetTypeTicket, row.TicketID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{
 			"internal": payload.Internal,
 		})
-		return harukiAPIHelper.SuccessResponse(c, "message added", &items[0])
+		return harukiAPIHelper.Responses.SuccessResponse(c, "message added", &items[0])
 	}
 }
 
@@ -242,7 +243,7 @@ func handleAdminUpdateTicketStatus(apiHelper *harukiAPIHelper.HarukiToolboxRoute
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionTicketStatusUpdate, adminAuditTargetTypeTicket, updated.TicketID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{
 			"status": statusValue,
 		})
-		return harukiAPIHelper.SuccessResponse(c, "ticket status updated", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ticket status updated", &resp)
 	}
 }
 
@@ -357,6 +358,6 @@ func handleAdminAssignTicket(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpe
 		adminCoreModule.WriteAdminAuditLog(c, apiHelper, adminAuditActionTicketAssign, adminAuditTargetTypeTicket, updated.TicketID, harukiAPIHelper.SystemLogResultSuccess, map[string]any{
 			"assigneeAdminID": assignee,
 		})
-		return harukiAPIHelper.SuccessResponse(c, "ticket assignment updated", &resp)
+		return harukiAPIHelper.Responses.SuccessResponse(c, "ticket assignment updated", &resp)
 	}
 }

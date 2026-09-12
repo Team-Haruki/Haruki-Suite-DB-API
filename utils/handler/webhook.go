@@ -3,9 +3,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
-	dbManager "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
-	harukiVersion "github.com/Team-Haruki/Haruki-Toolbox-Backend/version"
 	"io"
 	"net"
 	stdhttp "net/http"
@@ -14,6 +11,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
+	dbManager "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/postgresql"
+	harukiVersion "github.com/Team-Haruki/Haruki-Toolbox-Backend/version"
 )
 
 const webhookCallbackTimeout = 10 * time.Second

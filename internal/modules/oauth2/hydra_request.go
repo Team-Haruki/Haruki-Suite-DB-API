@@ -11,7 +11,7 @@ import (
 
 	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
 
-	"github.com/bytedance/sonic"
+	json "encoding/json/v2"
 )
 
 func getHydraLoginRequest(ctx context.Context, hydraConfig *harukiOAuth2.HydraConfig, challenge string) (*hydraLoginRequestResponse, error) {
@@ -20,7 +20,7 @@ func getHydraLoginRequest(ctx context.Context, hydraConfig *harukiOAuth2.HydraCo
 		return nil, err
 	}
 	var parsed hydraLoginRequestResponse
-	if err := sonic.Unmarshal(response, &parsed); err != nil {
+	if err := json.Unmarshal(response, &parsed); err != nil {
 		return nil, fmt.Errorf("failed to decode hydra login request: %w", err)
 	}
 	return &parsed, nil
@@ -32,7 +32,7 @@ func getHydraConsentRequest(ctx context.Context, hydraConfig *harukiOAuth2.Hydra
 		return nil, err
 	}
 	var parsed hydraConsentRequestResponse
-	if err := sonic.Unmarshal(response, &parsed); err != nil {
+	if err := json.Unmarshal(response, &parsed); err != nil {
 		return nil, fmt.Errorf("failed to decode hydra consent request: %w", err)
 	}
 	return &parsed, nil
@@ -44,7 +44,7 @@ func getHydraLogoutRequest(ctx context.Context, hydraConfig *harukiOAuth2.HydraC
 		return nil, err
 	}
 	var parsed hydraLogoutRequestResponse
-	if err := sonic.Unmarshal(response, &parsed); err != nil {
+	if err := json.Unmarshal(response, &parsed); err != nil {
 		return nil, fmt.Errorf("failed to decode hydra logout request: %w", err)
 	}
 	return &parsed, nil
@@ -56,7 +56,7 @@ func sendHydraAdminJSON(ctx context.Context, hydraConfig *harukiOAuth2.HydraConf
 		return nil, err
 	}
 	var parsed hydraRedirectResponse
-	if err := sonic.Unmarshal(response, &parsed); err != nil {
+	if err := json.Unmarshal(response, &parsed); err != nil {
 		return nil, fmt.Errorf("failed to decode hydra redirect response: %w", err)
 	}
 	return &parsed, nil
@@ -73,7 +73,7 @@ func sendHydraAdminRequest(ctx context.Context, hydraConfig *harukiOAuth2.HydraC
 
 	var requestBody []byte
 	if payload != nil {
-		requestBody, err = sonic.Marshal(payload)
+		requestBody, err = json.Marshal(payload)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode hydra request body: %w", err)
 		}
@@ -107,7 +107,7 @@ func sendHydraAdminRequest(ctx context.Context, hydraConfig *harukiOAuth2.HydraC
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		message := http.StatusText(resp.StatusCode)
 		var hydraErr hydraErrorResponse
-		if err := sonic.Unmarshal(body, &hydraErr); err == nil {
+		if err := json.Unmarshal(body, &hydraErr); err == nil {
 			for _, candidate := range []string{hydraErr.ErrorDescription, hydraErr.Message, hydraErr.Error} {
 				if strings.TrimSpace(candidate) != "" {
 					message = candidate

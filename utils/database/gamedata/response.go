@@ -2,10 +2,13 @@ package gamedata
 
 import (
 	"bytes"
-	"encoding/json"
+	"encoding/json/jsontext"
+	json "encoding/json/v2"
 	"fmt"
 	"math"
 	"strconv"
+
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/jsonvalue"
 
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/gamedata/catalog"
 )
@@ -49,7 +52,7 @@ func idStringFromRaw(raw []byte) (string, bool) {
 		}
 		return str, true
 	}
-	var num json.Number
+	var num jsonvalue.Number
 	if err := json.Unmarshal(t, &num); err != nil {
 		return "", false
 	}
@@ -231,17 +234,12 @@ func (r *Row) wholeDocument(withIdentity bool) ([]byte, error) {
 
 	for i := range r.cat.Entries {
 		e := &r.cat.Entries[i]
-		raw, present := r.byColumn[e.Column]
+		v, present, err := r.columnValue(e)
+		if err != nil {
+			return nil, err
+		}
 		if !present {
 			continue
-		}
-		v := raw
-		if e.Storage == catalog.StorageCompactJSON {
-			expanded, err := ExpandCompactJSON(raw)
-			if err != nil {
-				return nil, err
-			}
-			v = expanded
 		}
 		if e.Path != "" {
 			if flattened == nil {
@@ -301,7 +299,7 @@ func (r *Row) extraFlattenedChildren() []kvPair {
 	if !ok {
 		return nil
 	}
-	var m map[string]json.RawMessage
+	var m map[string]jsontext.Value
 	if err := json.Unmarshal(raw, &m); err != nil {
 		return nil
 	}
@@ -339,7 +337,7 @@ func (r *Row) userGamedata(nested bool) ([]byte, bool, error) {
 	if !ok {
 		return nil, false, nil
 	}
-	var m map[string]json.RawMessage
+	var m map[string]jsontext.Value
 	if err := json.Unmarshal(raw, &m); err != nil {
 		return nil, false, fmt.Errorf("gamedata: decode %s: %w", userGamedataKey, err)
 	}

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	harukiConfig "github.com/Team-Haruki/Haruki-Toolbox-Backend/config"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
 	harukiDataHandler "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/handler"
 	harukiHttp "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/http"
@@ -63,6 +64,9 @@ func TestNewUploadDataHandlerUsesExplicitDependencies(t *testing.T) {
 	if handler.SuiteRestoreService != dependencies.SuiteRestoreService {
 		t.Fatalf("SuiteRestoreService = %#v, want explicit dependency %#v", handler.SuiteRestoreService, dependencies.SuiteRestoreService)
 	}
+	if handler.DataSync != dependencies.DataSync {
+		t.Fatal("data sync configuration was not injected")
+	}
 	if handler.ServerCryptor != dependencies.ServerCryptor {
 		t.Fatalf("ServerCryptor = %#v, want explicit dependency %#v", handler.ServerCryptor, dependencies.ServerCryptor)
 	}
@@ -70,6 +74,7 @@ func TestNewUploadDataHandlerUsesExplicitDependencies(t *testing.T) {
 
 func testUploadDependencies() Dependencies {
 	return Dependencies{
+		DataSync:          harukiDataHandler.NewDataSyncConfig(harukiConfig.ThirdPartyDataProviderConfig{EndpointSakura: "https://sync.example.test", SecretSakura: "dummy"}),
 		HTTPClient:        harukiHttp.NewClient("", 15*time.Second),
 		DataHandlerLogger: harukiLogger.NewLogger("UploadTest", "DEBUG", io.Discard),
 		BirthdaySubscription: harukiDataHandler.NewBirthdaySubscriptionConfig(harukiDataHandler.BirthdaySubscriptionConfigOptions{

@@ -2,6 +2,9 @@ package oauth2
 
 import (
 	"context"
+	"strconv"
+	"time"
+
 	userCoreModule "github.com/Team-Haruki/Haruki-Toolbox-Backend/internal/modules/usercore"
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 	harukiAPIHelper "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/api"
@@ -9,8 +12,6 @@ import (
 	harukiRedis "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/redis"
 	harukiLogger "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/logger"
 	harukiOAuth2 "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/oauth2"
-	"strconv"
-	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/sync/singleflight"
@@ -109,7 +110,7 @@ func handleOAuth2GetGameData(apiHelper *harukiAPIHelper.HarukiToolboxRouterHelpe
 		body, err := loadOAuth2GameData(apiHelper, cacheKey, server, dataType, gameUserID, requestKey, stamp)
 		if err != nil {
 			if fErr, ok := err.(*fiber.Error); ok {
-				return harukiAPIHelper.UpdatedDataResponse[string](c, fErr.Code, fErr.Message, nil)
+				return harukiAPIHelper.Responses.UpdatedDataResponse[string](c, fErr.Code, fErr.Message, nil)
 			}
 			harukiLogger.Errorf("Failed to load OAuth2 game data: %v", err)
 			return harukiAPIHelper.ErrorInternal(c, "failed to get user data")

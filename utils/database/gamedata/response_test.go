@@ -1,7 +1,7 @@
 package gamedata
 
 import (
-	"encoding/json"
+	json "encoding/json/v2"
 	"testing"
 
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/database/gamedata/catalog"

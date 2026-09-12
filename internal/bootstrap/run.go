@@ -135,6 +135,7 @@ func Build(cfg harukiConfig.Config) (*Application, error) {
 		SyncInterval:   time.Duration(cfg.Afdian.SyncIntervalSeconds) * time.Second,
 	})
 	harukiAPI.RegisterRoutes(apiHelper, harukiAPI.Dependencies{
+		DataSync:          harukiHandler.NewDataSyncConfig(cfg.ThirdPartyDataProvider),
 		BackgroundTasks:   application.backgroundTasks,
 		TurnstileVerifier: turnstileVerifier,
 		UserDataBuilder:   harukiAPIHelper.NewUserDataBuilder(cfg.UserSystem.AvatarURL),
@@ -195,7 +196,7 @@ func Build(cfg harukiConfig.Config) (*Application, error) {
 			sqlPools = append(sqlPools, sqlPoolSource{name: "bot", db: resources.botSQLDB})
 		}
 		samplerInterval := time.Duration(cfg.Backend.ProfilingIntervalSeconds) * time.Second
-		waitStatsSampler = startStatsSampler(schedulerCtx, samplerInterval, sqlPools, resources.logger)
+		waitStatsSampler = startStatsSampler(schedulerCtx, samplerInterval, sqlPools, resources.gameDataPool, resources.logger)
 	}
 	// Workers are owned by Application so Serve/Close always cancel and drain them
 	// before any database resource is released.

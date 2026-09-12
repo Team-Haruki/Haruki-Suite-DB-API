@@ -1,7 +1,8 @@
 package bootstrap
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	json "encoding/json/v2"
 	"reflect"
 	"sort"
 	"testing"
@@ -56,7 +57,7 @@ func TestRuntimeConfigRedisContractRemainsStable(t *testing.T) {
 		t.Fatalf("Marshal returned error: %v", err)
 	}
 
-	var fields map[string]json.RawMessage
+	var fields map[string]jsontext.Value
 	if err := json.Unmarshal(payload, &fields); err != nil {
 		t.Fatalf("Unmarshal returned error: %v", err)
 	}

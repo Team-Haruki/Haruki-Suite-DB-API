@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	harukiUtils "github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
-	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/orderedmsgpack"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/msgpackcodec"
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/sekai"
 )
 
@@ -36,7 +36,7 @@ func TestCompareSuiteRestoreReportsShapeChanges(t *testing.T) {
 		t.Fatalf("write schema: %v", err)
 	}
 
-	msgpackBytes, err := orderedmsgpack.Marshal(map[string]any{
+	msgpackBytes, err := msgpackcodec.Marshal(map[string]any{
 		"userCards": []any{
 			[]any{int64(100), int64(30), []any{[]any{int64(1), "read"}}},
 		},
@@ -102,7 +102,7 @@ func TestCompareSuiteRestoreWithBaselineSchemaReportsChanges(t *testing.T) {
 		t.Fatalf("write schema: %v", err)
 	}
 
-	msgpackBytes, err := orderedmsgpack.Marshal(map[string]any{
+	msgpackBytes, err := msgpackcodec.Marshal(map[string]any{
 		"userCards": []any{
 			[]any{int64(100), int64(30), []any{[]any{int64(1), "read"}}},
 		},
@@ -140,7 +140,7 @@ func TestCompareSuiteRestoreReportGolden(t *testing.T) {
 		t.Fatalf("write schema: %v", err)
 	}
 
-	msgpackBytes, err := orderedmsgpack.Marshal(map[string]any{
+	msgpackBytes, err := msgpackcodec.Marshal(map[string]any{
 		"userCards": []any{
 			[]any{int64(100), int64(30), []any{[]any{int64(1), "read"}}},
 		},
@@ -181,7 +181,7 @@ func TestCompareSuiteRestoreRawUploadInput(t *testing.T) {
 		t.Fatalf("write schema: %v", err)
 	}
 
-	msgpackBytes, err := orderedmsgpack.Marshal(map[string]any{
+	msgpackBytes, err := msgpackcodec.Marshal(map[string]any{
 		"userCards": []any{[]any{int64(100), int64(30)}},
 	})
 	if err != nil {

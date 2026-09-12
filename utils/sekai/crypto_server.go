@@ -5,7 +5,7 @@ import (
 
 	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils"
 
-	"github.com/iancoleman/orderedmap"
+	"github.com/Team-Haruki/Haruki-Toolbox-Backend/utils/orderedmap"
 )
 
 // ServerCryptorConfig contains the Project Sekai client AES material used for
